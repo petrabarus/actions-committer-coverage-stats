@@ -80,10 +80,17 @@ impl GitHubClient {
             summary.get_percent_covered()
         ));
 
-        body.push_str("| user | lines | covered | % covered |\n");
-        body.push_str("|------|-------|---------|-----------|\n");
+        body.push_str("| **user** | **lines** | **covered** | **% covered** |\n");
+        body.push_str("|------|-------:|---------:|-----------|\n");
 
-        for user_stat in summary.get_user_stats() {
+        let mut sorted_user_stats = summary.get_user_stats().clone();
+        sorted_user_stats.sort_by(|a, b| {
+            let a = a.get_percent_covered();
+            let b = b.get_percent_covered();
+            b.partial_cmp(&a).unwrap()
+        });
+
+        for user_stat in sorted_user_stats {
             let percent_covered = user_stat.get_percent_covered();
             let status = if percent_covered >= min_threshold {
                 "✅"
@@ -99,10 +106,6 @@ impl GitHubClient {
                 user_stat.get_percent_covered(),
                 status
             ));
-        }
-
-        for _ in 0..4 {
-            body.push_str("|      |       |         |           |\n");
         }
 
         body

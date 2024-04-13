@@ -1,20 +1,27 @@
 ///! This module contains the coverage analysis for the project.
 
 /// Represents the coverage statistics for a single committer.
+#[derive(Clone)]
 pub struct CommitterCoverageUserStat {
     username: String,
     email: String,
     lines: u32,
     covered: u32,
+    percent_covered: f32,
 }
 
 impl CommitterCoverageUserStat {
     pub fn new(username: &str, email: &str, lines: u32, covered: u32) -> CommitterCoverageUserStat {
+        let percent_covered = match lines {
+            0 => 0.0,
+            _ => covered as f32 / lines as f32 * 100.0,
+        };
         CommitterCoverageUserStat {
             username: username.to_string(),
             email: email.to_string(),
             lines,
             covered,
+            percent_covered,
         }
     }
     
@@ -35,15 +42,13 @@ impl CommitterCoverageUserStat {
     }
 
     pub fn get_percent_covered(&self) -> f32 {
-        match self.lines {
-            0 => 0.0,
-            _ => self.covered as f32 / self.lines as f32 * 100.0,
-        }
+        self.percent_covered
     }
 }
 
 /// Represents the summary of the coverage for all committers.
 /// This will be printed to the pull request as a comment.
+#[derive(Clone)]
 pub struct CommitterCoverageSummary {
     lines: u32,
     covered: u32,
@@ -63,9 +68,10 @@ impl CommitterCoverageSummary {
 
     pub fn add_user_stat(&mut self, user_stat: CommitterCoverageUserStat) {
         self.user_stats.push(user_stat);
+        self.calculate_summary();
     }
 
-    pub fn calculate_summary(&mut self) {
+    fn calculate_summary(&mut self) {
         self.lines = self.user_stats.iter().map(|s| s.lines).sum();
         self.covered = self.user_stats.iter().map(|s| s.covered).sum();
         self.percent_covered = self.covered as f32 / self.lines as f32 * 100.0;
@@ -152,7 +158,6 @@ mod tests {
             100,
         ));
 
-        summary.calculate_summary();
         assert_eq!(summary.lines, 300);
         assert_eq!(summary.covered, 150);
         assert_eq!(summary.percent_covered, 50.0);
