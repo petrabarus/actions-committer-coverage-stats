@@ -12,8 +12,15 @@ Default: `80`
 ### 1.2 `coverage_files`
 
 The list of coverage files to be analyzed. The coverage files should be in the format of `path/to/coverage.xml`. Multiple coverage files can be provided by separating them with a comma.
+At the moment, this only supports Cobertura XML format.
+
+Default: `coverage.xml`
 
 ## 2. Outputs
+
+This action will post a comment on the pull request with the list of committers and their code coverage percentage.
+
+![Comment](./docs/images/README-md-3-output-screenshot.png)
 
 ## 3. Example Usage
 
