@@ -80,13 +80,18 @@ pub fn calculate_coverage_summary() -> CommitterCoverageSummary {
     let mut summary = CommitterCoverageSummary::new();
 
     // TODO: Remove this dummy data
-    let user_stat = CommitterCoverageUserStat::new(
+    summary.add_user_stat(CommitterCoverageUserStat::new(
         "testing",
         "testing@example.com",
         100,
         50,
-    );
-    summary.add_user_stat(user_stat);
+    ));
+    summary.add_user_stat(CommitterCoverageUserStat::new(
+        "testing2",
+        "testing2@example.com",
+        200,
+        100,
+    ));
 
     summary
 }
@@ -101,7 +106,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_coverage_user_stat_percent_covered() {
+    fn test_committer_coverage_user_stat_percent_covered() {
         let user_stat = CommitterCoverageUserStat::new(
             "user",
             "user@example.com",
@@ -117,5 +122,27 @@ mod tests {
             0,
         );
         assert_eq!(user_stat.get_percent_covered(), 0.0);
+    }
+
+    #[test]
+    fn test_committer_coverage_summary_calculate_summary() {
+        let mut summary = CommitterCoverageSummary::new();
+        summary.add_user_stat(CommitterCoverageUserStat::new(
+            "user",
+            "user1@example.com",
+            100,
+            50,
+        ));
+        summary.add_user_stat(CommitterCoverageUserStat::new(
+            "user2",
+            "user2@example.com",
+            200,
+            100,
+        ));
+
+        summary.calculate_summary();
+        assert_eq!(summary.lines, 300);
+        assert_eq!(summary.covered, 150);
+        assert_eq!(summary.percent_covered, 50.0);
     }
 }

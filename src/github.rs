@@ -64,8 +64,12 @@ impl GitHubClient {
         pull_request_number: u32,
         summary: &coverage::CommitterCoverageSummary,
     ) -> Result<(), String> {
-        let mut body = String::new();
+        let body = GitHubClient::create_summary_content(summary);
+        self.post_comment(pull_request_number, &body)
+    }
 
+    fn create_summary_content(summary: &coverage::CommitterCoverageSummary) -> String{
+        let mut body = String::new();
         body.push_str("# Committer Coverage Report\n");
 
         body.push_str("| user | lines | covered | % covered |\n");
@@ -76,7 +80,7 @@ impl GitHubClient {
                 "| {} | {} | {} | {:.2} |\n",
                 user_stat.get_username(),
                 user_stat.get_lines(),
-                user_stat.get_email(),
+                user_stat.get_covered(),
                 user_stat.get_percent_covered()
             ));
         }
@@ -85,7 +89,7 @@ impl GitHubClient {
             body.push_str("|      |       |         |           |\n");
         }
 
-        self.post_comment(pull_request_number, &body)
+        body
     }
 }
 
