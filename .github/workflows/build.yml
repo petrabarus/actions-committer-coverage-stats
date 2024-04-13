@@ -13,4 +13,4 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: petrabarus/committer-coverage-summary@main
+      - uses: petrabarus/actions-committer-coverage-stats@main
