@@ -19,3 +19,5 @@ target/
 
 # Code coverage
 default**.profraw
+coverage.xml
+lcov.info

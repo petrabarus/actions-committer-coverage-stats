@@ -13,6 +13,7 @@ inputs:
       The list of coverage files to be analyzed. 
       The coverage files should be in the format of `path/to/coverage.xml`.
       Multiple coverage files can be provided by separating them with a comma.
+      At the moment, this only supports Cobertura XML format.
     required: false
     default: "coverage.xml"
   min_threshold:

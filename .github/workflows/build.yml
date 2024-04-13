@@ -12,5 +12,28 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: petrabarus/github-action-committer-coverage-stats@main
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: rustup update stable
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate code coverage lcov
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+
+      - name: Generate code coverage cobertura
+        run: cargo llvm-cov --all-features --workspace --cobertura --output-path coverage.xml
+
+      - name: Coverage Stats
+        uses: petrabarus/github-action-committer-coverage-stats@main
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            lcov.info
+            coverage.xml
