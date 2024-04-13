@@ -1,0 +1,19 @@
+name: Committer Code Coverage Summary
+author: Petra Barus
+description: >
+  This GitHub Action will analyze code coverage and print the summary per
+  committer to the Pull Request.
+inputs:
+  github_token:
+    description: 'The default GitHub token (secrets.GITHUB_TOKEN). We need this to post a comment to the PR as the bot.'
+    required: true
+    default: ${{ github.token }}
+  files:
+    description: 'The files to be analyzed. It should be a glob pattern. Multiple files can be separated by comma.'
+    required: false
+branding:
+  icon: check
+  color: green
+runs:
+  using: docker
+  image: Dockerfile
