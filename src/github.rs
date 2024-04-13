@@ -108,6 +108,9 @@ impl GitHubClient {
             ));
         }
 
+        body.push_str("\n");
+        body.push_str("⭐ [actions-committer-coverage-stats](https://github.com/petrabarus/actions-committer-coverage-stats)");
+
         body
     }
 }
