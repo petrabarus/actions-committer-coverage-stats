@@ -1,9 +1,5 @@
 // This is the main entry point of the program.
-use github_action_committer_coverage_stats::{
-    analysis, config,
-    coverage::Coverage,
-    github,
-};
+use github_action_committer_coverage_stats::{analysis, config, coverage::Coverage, github, git};
 
 fn print_summary_to_pr_if_available(
     gh: &github::GitHubClient,
@@ -62,10 +58,11 @@ fn main() {
 
     let coverage = load_coverage_file(&config.get_files()).expect("Failed to load coverage file");
 
-    // DEBUG: print
-    print!("{:?}", coverage.get_file_count());
-    github::load_committers();
-    let summary = analysis::calculate_coverage_summary();
+    let git = git::Git::new();
+    let summary = analysis::calculate_committers_coverage_summary(
+        &git,
+        &coverage,
+    );
 
     print_summary_to_pr_if_available(
         &gh,

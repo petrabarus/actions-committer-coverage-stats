@@ -1,5 +1,6 @@
 ///! This module contains the committer coverage analysis.
 
+use super::{coverage, git};
 
 /// Represents the summary of the coverage for all committers.
 /// This will be printed to the pull request as a comment.
@@ -95,7 +96,10 @@ impl CommitterCoverageUserStat {
     }
 }
 
-pub fn calculate_coverage_summary() -> CommitterCoverageSummary {
+pub fn calculate_committers_coverage_summary(
+    _git: &git::Git,
+    _coverage: &coverage::Coverage,
+) -> CommitterCoverageSummary {
     let mut summary = CommitterCoverageSummary::new();
 
     // TODO: Remove this dummy data
