@@ -109,7 +109,7 @@ impl GitHubClient {
         }
 
         body.push_str("\n");
-        body.push_str("⭐ [actions-committer-coverage-stats](https://github.com/petrabarus/actions-committer-coverage-stats)");
+        body.push_str("⭐ [github-action-committer-coverage-stats](https://github.com/petrabarus/github-action-committer-coverage-stats)");
 
         body
     }

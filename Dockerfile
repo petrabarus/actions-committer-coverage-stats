@@ -3,7 +3,7 @@
 
 # Create a stage for building the application.
 ARG RUST_VERSION=1.70.0
-ARG APP_NAME=committer_coverage_stats
+ARG APP_NAME=github_action_committer_coverage_stats
 
 FROM rust:${RUST_VERSION}-slim-bullseye AS build
 ARG APP_NAME

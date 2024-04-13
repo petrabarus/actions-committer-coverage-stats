@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use committer_coverage_stats::github::*;
-    use committer_coverage_stats::coverage::*;
+    use github_action_committer_coverage_stats::github::*;
+    use github_action_committer_coverage_stats::coverage::*;
 
     #[ignore = "This test requires a valid token"]
     #[test]

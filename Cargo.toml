@@ -1,5 +1,5 @@
 [package]
-name = "committer_coverage_stats"
+name = "github_action_committer_coverage_stats"
 version = "0.1.0"
 edition = "2021"
 

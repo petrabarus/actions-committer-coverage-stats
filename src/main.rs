@@ -1,5 +1,5 @@
 // This is the main entry point of the program.
-use committer_coverage_stats::{config, coverage, github};
+use github_action_committer_coverage_stats::{config, coverage, github};
 
 fn print_summary_to_pr_if_available(
     gh: &github::GitHubClient, 
