@@ -2,7 +2,7 @@
 //use curl::easy::{Easy, List};
 
 use json::object;
-use super::coverage;
+use super::analysis;
 
 /// This struct represents the GitHub API client.
 pub struct GitHubClient {
@@ -63,14 +63,14 @@ impl GitHubClient {
     pub fn print_summary_to_pr(
         &self,
         pull_request_number: u32,
-        summary: &coverage::CommitterCoverageSummary,
+        summary: &analysis::CommitterCoverageSummary,
         min_threshold: f32,
     ) -> Result<(), String> {
         let body = GitHubClient::create_summary_content(summary, min_threshold);
         self.post_comment(pull_request_number, &body)
     }
 
-    fn create_summary_content(summary: &coverage::CommitterCoverageSummary, min_threshold: f32) -> String{
+    fn create_summary_content(summary: &analysis::CommitterCoverageSummary, min_threshold: f32) -> String{
         let mut body = String::new();
         body.push_str("# Committer Coverage Report\n");
         body.push_str(&format!(

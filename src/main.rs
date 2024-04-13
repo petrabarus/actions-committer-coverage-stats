@@ -1,10 +1,14 @@
 // This is the main entry point of the program.
-use github_action_committer_coverage_stats::{config, coverage, github};
+use github_action_committer_coverage_stats::{
+    analysis, config,
+    coverage::Coverage,
+    github,
+};
 
 fn print_summary_to_pr_if_available(
-    gh: &github::GitHubClient, 
-    github_ref: &str, 
-    summary: &coverage::CommitterCoverageSummary,
+    gh: &github::GitHubClient,
+    github_ref: &str,
+    summary: &analysis::CommitterCoverageSummary,
     min_threshold: f32,
 ) {
     let pull_request_number = match github::parse_pr_number_from_ref(github_ref) {
@@ -15,13 +19,31 @@ fn print_summary_to_pr_if_available(
         }
     };
 
-    let pr = gh.print_summary_to_pr(
-        pull_request_number, 
-        summary,
-        min_threshold,
-    );
+    let pr = gh.print_summary_to_pr(pull_request_number, summary, min_threshold);
     if let Err(err) = pr {
         panic!("Failed to print summary to pull request: {}", err);
+    }
+}
+
+fn load_coverage_file(files: &Vec<String>) -> Result<Coverage, String> {
+    let coverages: Vec<Coverage> = files
+        .into_iter()
+        .map(|file| {
+            let coverage = Coverage::new_from_path(&file);
+            // print reason for failure if any
+            if let Err(err) = &coverage {
+                println!("Failed to load coverage file {}: {}", file, err);
+            }
+            coverage
+        })
+        .filter_map(Result::ok)
+        .collect();
+
+    // just return the first coverage file for now
+    if let Some(coverage) = coverages.first() {
+        Ok(coverage.clone())
+    } else {
+        Err("No coverage files loaded".to_string())
     }
 }
 
@@ -38,13 +60,16 @@ fn main() {
         config.get_github_token(),
     );
 
-    coverage::load_coverage_files();
+    let coverage = load_coverage_file(&config.get_files()).expect("Failed to load coverage file");
+
+    // DEBUG: print
+    print!("{:?}", coverage.get_file_count());
     github::load_committers();
-    let summary = coverage::calculate_coverage_summary();
+    let summary = analysis::calculate_coverage_summary();
 
     print_summary_to_pr_if_available(
-        &gh, 
-        config.get_github_ref(), 
+        &gh,
+        config.get_github_ref(),
         &summary,
         config.get_min_threshold(),
     );
