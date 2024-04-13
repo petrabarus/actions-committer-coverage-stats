@@ -4,6 +4,7 @@
 use json::object;
 use super::coverage;
 
+/// This struct represents the GitHub API client.
 pub struct GitHubClient {
     api_url: String,
     repo: String,
@@ -63,25 +64,40 @@ impl GitHubClient {
         &self,
         pull_request_number: u32,
         summary: &coverage::CommitterCoverageSummary,
+        min_threshold: f32,
     ) -> Result<(), String> {
-        let body = GitHubClient::create_summary_content(summary);
+        let body = GitHubClient::create_summary_content(summary, min_threshold);
         self.post_comment(pull_request_number, &body)
     }
 
-    fn create_summary_content(summary: &coverage::CommitterCoverageSummary) -> String{
+    fn create_summary_content(summary: &coverage::CommitterCoverageSummary, min_threshold: f32) -> String{
         let mut body = String::new();
         body.push_str("# Committer Coverage Report\n");
+        body.push_str(&format!(
+            "Total coverage: {} / {} ({:.2}%)\n\n",
+            summary.get_covered(),
+            summary.get_lines(),
+            summary.get_percent_covered()
+        ));
 
         body.push_str("| user | lines | covered | % covered |\n");
         body.push_str("|------|-------|---------|-----------|\n");
 
         for user_stat in summary.get_user_stats() {
+            let percent_covered = user_stat.get_percent_covered();
+            let status = if percent_covered >= min_threshold {
+                "✅"
+            } else {
+                "❌"
+            };
+
             body.push_str(&format!(
-                "| {} | {} | {} | {:.2} |\n",
+                "| {} | {} | {} | {:.2} {} |\n",
                 user_stat.get_username(),
                 user_stat.get_lines(),
                 user_stat.get_covered(),
-                user_stat.get_percent_covered()
+                user_stat.get_percent_covered(),
+                status
             ));
         }
 

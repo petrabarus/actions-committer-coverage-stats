@@ -8,9 +8,20 @@ inputs:
     description: 'The default GitHub token (secrets.GITHUB_TOKEN). We need this to post a comment to the PR as the bot.'
     required: true
     default: ${{ github.token }}
-  files:
-    description: 'The files to be analyzed. It should be a glob pattern. Multiple files can be separated by comma.'
+  coverage_files:
+    description: |
+      The list of coverage files to be analyzed. 
+      The coverage files should be in the format of `path/to/coverage.xml`.
+      Multiple coverage files can be provided by separating them with a comma.
     required: false
+    default: "coverage.xml"
+  min_threshold:
+    description: |
+      The minimum threshold for the committers' code coverage percentage. 
+      If the code coverage percentage of a committer is below this threshold, 
+      the committer will be considered as a failing committer.
+    required: false
+    default: "80"
 branding:
   icon: check
   color: green

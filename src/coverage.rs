@@ -74,6 +74,18 @@ impl CommitterCoverageSummary {
     pub fn get_user_stats(&self) -> &Vec<CommitterCoverageUserStat> {
         &self.user_stats
     }
+
+    pub fn get_lines(&self) -> u32 {
+        self.lines
+    }
+
+    pub fn get_covered(&self) -> u32 {
+        self.covered
+    }
+
+    pub fn get_percent_covered(&self) -> f32 {
+        self.percent_covered
+    }
 }
 
 pub fn calculate_coverage_summary() -> CommitterCoverageSummary {
@@ -90,7 +102,7 @@ pub fn calculate_coverage_summary() -> CommitterCoverageSummary {
         "testing2",
         "testing2@example.com",
         200,
-        100,
+        190,
     ));
 
     summary

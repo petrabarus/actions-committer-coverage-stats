@@ -1,58 +1,93 @@
 //! This module contains the Config struct and its implementation.
-use std::{collections::HashMap, env};
+use std::env;
 
 pub struct Config {
-    values: HashMap<String, String>,
+    /// This contains coverage files that will be parsed.
+    coverage_files: Vec<String>,
+
+    /// The minimum threshold for the coverage percentage.
+    /// User with coverage percentage below this threshold will be considered as failing.
+    min_threshold: f32,
+
+    github_api_url: String,
+    github_token: String,
+    github_ref: String,
+    github_repo: String,
 }
 
 impl Config {
     /// Create a new Config instance from the environment variables.
     pub fn new_from_env() -> Result<Config, String> {
-        let var_configs = Config::get_var_configs();
+        // Parse the action inputs
+        let coverage_files = env::var("INPUT_FILES").
+            unwrap_or("coverage.xml".to_string());
+        let coverage_files = parse_files(&coverage_files);
 
-        let mut values = HashMap::new();
-        for (key, (env_var, default)) in var_configs.iter() {
-            let value = match env::var(env_var) {
-                Ok(value) => value,
-                Err(_) => match default {
-                    Some(default) => default.to_string(),
-                    None => return Err(format!("Missing {}", env_var)),
-                },
-            };
-            values.insert(key.to_string(), value);
-        }
+        let github_token = env::var("INPUT_GITHUB_TOKEN").map_err(|_| "github_token is not set")?;
 
-        Ok(Config { values })
-    }
+        let min_threshold = env::var("INPUT_MIN_THRESHOLD")
+            .unwrap_or("80".to_string())
+            .parse::<f32>()
+            .map_err(|_| "min_threshold is not a valid number")?;
 
-    fn get_var_configs() -> HashMap<&'static str, (&'static str, Option<&'static str>)> {
-        HashMap::from([
-            (
-                "github_api_url",
-                ("GITHUB_API_URL", Some("https://api.github.com")),
-            ),
-            ("github_token", ("INPUT_GITHUB_TOKEN", None)),
-            ("github_ref", ("GITHUB_REF", None)),
-            ("github_repo", ("GITHUB_REPOSITORY", None)),
-        ])
+        // Parse the GitHub environment variables.
+        let github_ref = env::var("GITHUB_REF").map_err(|_| "GITHUB_REF is not set")?;
+        let github_repo =
+            env::var("GITHUB_REPOSITORY").map_err(|_| "GITHUB_REPOSITORY is not set")?;
+        let github_api_url =
+            env::var("GITHUB_API_URL").unwrap_or("https://api.github.com".to_string());
+
+        Ok(Config {
+            coverage_files,
+            min_threshold,
+            github_api_url,
+            github_token,
+            github_ref,
+            github_repo,
+        })
     }
 
     pub fn get_github_token(&self) -> &str {
-        &self.values["github_token"]
+        &self.github_token
     }
 
     pub fn get_github_ref(&self) -> &str {
-        &self.values["github_ref"]
+        &self.github_ref
     }
 
     pub fn get_github_api_url(&self) -> &str {
-        &self.values["github_api_url"]
+        &self.github_api_url
     }
 
     pub fn get_github_repo(&self) -> &str {
-        &self.values["github_repo"]
+        &self.github_repo
+    }
+
+    pub fn get_files(&self) -> &Vec<String> {
+        &self.coverage_files
+    }
+
+    pub fn get_min_threshold(&self) -> f32 {
+        self.min_threshold
     }
 }
 
+fn parse_files(files: &str) -> Vec<String> {
+    files.split(",").map(|s| s.to_string()).collect()
+}
+
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_files() {
+        let files = "file1,file2,file3";
+        let expected = vec![
+            "file1".to_string(),
+            "file2".to_string(),
+            "file3".to_string(),
+        ];
+        assert_eq!(parse_files(files), expected);
+    }
+}

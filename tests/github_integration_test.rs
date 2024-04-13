@@ -20,7 +20,8 @@ mod tests {
             50,
         ));
 
-        let res = client.print_summary_to_pr(1, &summary);
+        let min_threshold = 80.0;
+        let res = client.print_summary_to_pr(1, &summary, min_threshold);
         println!("{:?}", res);
         assert!(res.is_ok());
     }
