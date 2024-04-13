@@ -16,7 +16,7 @@ mod tests {
     fn test_githubclient_print_summary_to_pr() {
         let client = create_client();
 
-        let mut summary = CommitterCoverageSummary::new();
+        let mut summary = CommitterCoverageSummary::default();
         summary.add_user_stat(CommitterCoverageUserStat::new(
             "petrabarus",
             "user@example.com",

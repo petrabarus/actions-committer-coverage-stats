@@ -21,8 +21,8 @@ impl CoverageProvider for Provider {
 
     fn load_coverage(&self) -> Result<Coverage, String> {
         let mut coverage = Coverage::new();
-        coverage.add_file(CoverageFile::new());
-        coverage.add_file(CoverageFile::new());
+        coverage.add_file(CoverageFile::default());
+        coverage.add_file(CoverageFile::default());
 
         Ok(coverage)
     }

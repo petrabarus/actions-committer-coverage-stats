@@ -21,11 +21,11 @@ fn print_summary_to_pr_if_available(
     }
 }
 
-fn load_coverage_file(files: &Vec<String>) -> Result<Coverage, String> {
+fn load_coverage_file(files: &[String]) -> Result<Coverage, String> {
     let coverages: Vec<Coverage> = files
-        .into_iter()
+        .iter()
         .map(|file| {
-            let coverage = Coverage::new_from_path(&file);
+            let coverage = Coverage::new_from_path(file);
             // print reason for failure if any
             if let Err(err) = &coverage {
                 println!("Failed to load coverage file {}: {}", file, err);
@@ -56,9 +56,9 @@ fn main() {
         config.get_github_token(),
     );
 
-    let coverage = load_coverage_file(&config.get_files()).expect("Failed to load coverage file");
+    let coverage = load_coverage_file(config.get_files()).expect("Failed to load coverage file");
 
-    let git = git::Git::new();
+    let git = git::Git::default();
     let summary = analysis::calculate_committers_coverage_summary(
         &git,
         &coverage,

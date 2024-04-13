@@ -1,7 +1,5 @@
+//! This module contains the coverage analysis for the project.
 use std::vec;
-
-///! This module contains the coverage analysis for the project.
-/// 
 
 mod cobertura;
 
@@ -53,27 +51,24 @@ impl Coverage {
     fn create_provider_from_content(content: &str) -> Result<Box<dyn CoverageProvider>, String> {
         let provider = "cobertura";
 
-        let provider = if provider == "cobertura" {
-            cobertura::Provider::new(content)
-        } else {
-            return Err(format!("Unknown coverage provider: {}", provider));
-        };
-
-        Ok(Box::new(provider))
+        match provider {
+            "cobertura" => {
+                let provider = cobertura::Provider::new(content);
+                Ok(Box::new(provider))
+            }
+            _ => Err(format!("Unknown coverage provider: {}", provider)),
+        }
     }
 }
 
 /// Represents the coverage statistics for a single file.
 /// This contains the file path and the coverage stats for that file.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CoverageFile {
     path: String,
 }
 
 impl CoverageFile {
-    pub fn new() -> CoverageFile {
-        CoverageFile { path: "".to_string() }
-    }
     pub fn get_path(&self) -> &str {
         &self.path
     }

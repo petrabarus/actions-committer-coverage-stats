@@ -1,6 +1,11 @@
 name: Build
 
 on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
   pull_request:
     branches:
       - main
@@ -20,6 +25,11 @@ jobs:
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
+      
+      - name: Install Rust Clippy and Rust Sonar
+        run: |
+          rustup component add clippy
+          cargo install cargo-sonar
 
       - name: Generate code coverage lcov
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
@@ -30,6 +40,11 @@ jobs:
       - name: Coverage Stats
         uses: petrabarus/github-action-committer-coverage-stats@main
 
+      - name: Generate Reports
+        run: |
+          cargo clippy --message-format json > clippy-report.json
+          cargo sonar --clippy --clippy-path clippy-report.json
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
@@ -37,3 +52,27 @@ jobs:
           path: |
             lcov.info
             coverage.xml
+
+      - name: Install cargo-sonar
+        run: |
+            cargo install cargo-sonar
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dcommunity.rust.lcov.reportPaths=lcov.info
+            -Dcommunity.rust.clippy.reportPaths=clippy-report.json
+            -Dsonar.externalIssuesReportPaths=sonar-issues.json
+
+  release:
+    runs-on: ubuntu-latest
+    needs: 
+      - build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Release
+        run: echo "Release"

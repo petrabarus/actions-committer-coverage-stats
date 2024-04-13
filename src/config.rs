@@ -9,6 +9,9 @@ pub struct Config {
     /// User with coverage percentage below this threshold will be considered as failing.
     min_threshold: f32,
 
+    /// The workspace directory where the project is located.
+    workspace: String,
+
     github_api_url: String,
     github_token: String,
     github_ref: String,
@@ -25,6 +28,7 @@ impl Config {
 
         let github_token = env::var("INPUT_GITHUB_TOKEN").map_err(|_| "github_token is not set")?;
 
+        let workspace = env::var("INPUT_WORKSPACE").map_err(|_| "workspace is not set")?;
         let min_threshold = env::var("INPUT_MIN_THRESHOLD")
             .unwrap_or("80".to_string())
             .parse::<f32>()
@@ -40,11 +44,25 @@ impl Config {
         Ok(Config {
             coverage_files,
             min_threshold,
+            workspace,
+
             github_api_url,
             github_token,
             github_ref,
             github_repo,
         })
+    }
+
+    pub fn get_files(&self) -> &Vec<String> {
+        &self.coverage_files
+    }
+
+    pub fn get_min_threshold(&self) -> f32 {
+        self.min_threshold
+    }
+
+    pub fn get_workspace(&self) -> &str {
+        &self.workspace
     }
 
     pub fn get_github_token(&self) -> &str {
@@ -63,17 +81,10 @@ impl Config {
         &self.github_repo
     }
 
-    pub fn get_files(&self) -> &Vec<String> {
-        &self.coverage_files
-    }
-
-    pub fn get_min_threshold(&self) -> f32 {
-        self.min_threshold
-    }
 }
 
 fn parse_files(files: &str) -> Vec<String> {
-    files.split(",").map(|s| s.to_string()).collect()
+    files.split(',').map(|s| s.to_string()).collect()
 }
 
 #[cfg(test)]

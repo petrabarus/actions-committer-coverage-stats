@@ -62,13 +62,13 @@ impl GitHubClient {
             Ok(result) => match result.status() {
                 reqwest::StatusCode::CREATED => Ok(()),
                 status => {
-                    return Err(format!(
+                    Err(format!(
                         "Failed to send request: {}",
                         status.canonical_reason().unwrap_or("Unknown")
                     ))
                 }
             },
-            Err(err) => return Err(format!("Failed to send request: {}", err)),
+            Err(err) => Err(format!("Failed to send request: {}", err)),
         }
     }
 
@@ -104,7 +104,7 @@ impl GitHubClient {
         let url = format!("{}/search/users?q={}", self.api_url, email);
         let client = reqwest::blocking::Client::new();
         let result = client
-            .get(&url)
+            .get(url)
             .header("User-Agent", USER_AGENT)
             .header("Content-Type", "application/json")
             .bearer_auth(&self.token)
@@ -118,13 +118,13 @@ impl GitHubClient {
                     GitHubClient::parse_user_from_search_response(&response)
                 }
                 status => {
-                    return Err(format!(
+                    Err(format!(
                         "Failed to send request: {}",
                         status.canonical_reason().unwrap_or("Unknown")
                     ))
                 }
             },
-            Err(err) => return Err(format!("Failed to send request: {}", err)),
+            Err(err) => Err(format!("Failed to send request: {}", err)),
         }
     }
 
@@ -153,7 +153,7 @@ impl GitHubClient {
         }
 
         let items = json["items"].clone();
-        if items.is_array() && items.len() > 0 {
+        if items.is_array() && !items.is_empty(){
             let item = &items[0];
             let username = item["login"].to_string();
             let avatar_url = item["avatar_url"].to_string();
@@ -228,8 +228,7 @@ fn create_summary_content(
         ));
     }
 
-    body.push_str("\n");
-    body.push_str("⭐ [github-action-committer-coverage-stats](https://github.com/testuser/github-action-committer-coverage-stats)");
+    body.push_str("\n⭐ [github-action-committer-coverage-stats](https://github.com/testuser/github-action-committer-coverage-stats)");
 
     body
 }

@@ -1,10 +1,9 @@
-///! This module contains the committer coverage analysis.
-
+//! This module contains the committer coverage analysis.
 use super::{coverage, git};
 
 /// Represents the summary of the coverage for all committers.
 /// This will be printed to the pull request as a comment.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CommitterCoverageSummary {
     lines: u32,
     covered: u32,
@@ -13,15 +12,6 @@ pub struct CommitterCoverageSummary {
 }
 
 impl CommitterCoverageSummary {
-    pub fn new() -> CommitterCoverageSummary {
-        CommitterCoverageSummary {
-            lines: 0,
-            covered: 0,
-            percent_covered: 0.0,
-            user_stats: Vec::new(),
-        }
-    }
-
     pub fn add_user_stat(&mut self, user_stat: CommitterCoverageUserStat) {
         self.user_stats.push(user_stat);
         self.calculate_summary();
@@ -100,7 +90,7 @@ pub fn calculate_committers_coverage_summary(
     _git: &git::Git,
     _coverage: &coverage::Coverage,
 ) -> CommitterCoverageSummary {
-    let mut summary = CommitterCoverageSummary::new();
+    let mut summary = CommitterCoverageSummary::default();
 
     // TODO: Remove this dummy data
     summary.add_user_stat(CommitterCoverageUserStat::new(
@@ -149,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_committer_coverage_summary_calculate_summary() {
-        let mut summary = CommitterCoverageSummary::new();
+        let mut summary = CommitterCoverageSummary::default();
         summary.add_user_stat(CommitterCoverageUserStat::new(
             "user",
             "user1@example.com",

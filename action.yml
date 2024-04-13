@@ -23,6 +23,10 @@ inputs:
       the committer will be considered as a failing committer.
     required: false
     default: "80"
+  workspace:
+    description: 'The workspace directory. Default is the root of the repository.'
+    required: false
+    default: ${{ github.workspace }}
 branding:
   icon: check
   color: green

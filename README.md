@@ -1,4 +1,4 @@
-# Committers Code Coverage Stats
+# Committers Code Coverage Stats GitHub Action
 Github action to analyze the code coverage of the committers in a repository.
 
 ## 1. Inputs
