@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use github_action_committer_coverage_stats::github::*;
     use github_action_committer_coverage_stats::analysis::*;
+    use github_action_committer_coverage_stats::github::*;
 
     fn create_client() -> GitHubClient {
         GitHubClient::new(
@@ -35,9 +35,7 @@ mod tests {
     fn test_githubclient_get_user_by_email_found() {
         let mut client = create_client();
 
-        let user = client.get_user_by_email(
-            "test@example.com",
-        );
+        let user = client.get_user_by_email("test@example.com");
 
         assert!(user.is_ok());
         let user = user.unwrap();
@@ -51,9 +49,7 @@ mod tests {
     fn test_githubclient_get_user_by_email_not_found() {
         let mut client = create_client();
 
-        let user = client.get_user_by_email(
-            "testxxxxxxxxxxx@example.com",
-        );
+        let user = client.get_user_by_email("testxxxxxxxxxxx@example.com");
 
         assert!(user.is_ok());
         let user = user.unwrap();

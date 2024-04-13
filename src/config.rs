@@ -22,24 +22,27 @@ impl Config {
     /// Create a new Config instance from the environment variables.
     pub fn new_from_env() -> Result<Config, String> {
         // Parse the action inputs
-        let coverage_files = env::var("INPUT_FILES").
-            unwrap_or("coverage.xml".to_string());
+        let coverage_files =
+            env::var("INPUT_FILES").unwrap_or("coverage.xml".to_string());
         let coverage_files = parse_files(&coverage_files);
 
-        let github_token = env::var("INPUT_GITHUB_TOKEN").map_err(|_| "github_token is not set")?;
+        let github_token = env::var("INPUT_GITHUB_TOKEN")
+            .map_err(|_| "github_token is not set")?;
 
-        let workspace = env::var("INPUT_WORKSPACE").map_err(|_| "workspace is not set")?;
+        let workspace =
+            env::var("INPUT_WORKSPACE").map_err(|_| "workspace is not set")?;
         let min_threshold = env::var("INPUT_MIN_THRESHOLD")
             .unwrap_or("80".to_string())
             .parse::<f32>()
             .map_err(|_| "min_threshold is not a valid number")?;
 
         // Parse the GitHub environment variables.
-        let github_ref = env::var("GITHUB_REF").map_err(|_| "GITHUB_REF is not set")?;
-        let github_repo =
-            env::var("GITHUB_REPOSITORY").map_err(|_| "GITHUB_REPOSITORY is not set")?;
-        let github_api_url =
-            env::var("GITHUB_API_URL").unwrap_or("https://api.github.com".to_string());
+        let github_ref =
+            env::var("GITHUB_REF").map_err(|_| "GITHUB_REF is not set")?;
+        let github_repo = env::var("GITHUB_REPOSITORY")
+            .map_err(|_| "GITHUB_REPOSITORY is not set")?;
+        let github_api_url = env::var("GITHUB_API_URL")
+            .unwrap_or("https://api.github.com".to_string());
 
         Ok(Config {
             coverage_files,
@@ -80,7 +83,6 @@ impl Config {
     pub fn get_github_repo(&self) -> &str {
         &self.github_repo
     }
-
 }
 
 fn parse_files(files: &str) -> Vec<String> {

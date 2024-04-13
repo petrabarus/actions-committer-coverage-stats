@@ -4,9 +4,7 @@
 use super::*;
 
 /// Cobertura coverage provider
-pub struct Provider {
-
-}
+pub struct Provider {}
 
 impl Provider {
     pub fn new(_content: &str) -> Provider {
@@ -20,7 +18,7 @@ impl CoverageProvider for Provider {
     }
 
     fn load_coverage(&self) -> Result<Coverage, String> {
-        let mut coverage = Coverage::new();
+        let mut coverage = Coverage::default();
         coverage.add_file(CoverageFile::default());
         coverage.add_file(CoverageFile::default());
 
@@ -41,14 +39,14 @@ mod tests {
     #[test]
     fn test_load_coverage_001() {
         let path = "res/tests/cobertura-001.xml";
-        let content = std::fs::read_to_string(path).
-            expect(&format!("Failed to read file: {}", path));
+        let content = std::fs::read_to_string(path)
+            .expect(&format!("Failed to read file: {}", path));
 
         let provider = Provider::new(&content);
-        let coverage = provider.load_coverage().
-            expect("Failed to load coverage");
-        
-        println!("{}", content);
+        let coverage =
+            provider.load_coverage().expect("Failed to load coverage");
+
+        //println!("{}", content);
 
         assert_eq!(coverage.files.len(), 2);
     }

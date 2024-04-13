@@ -1,5 +1,4 @@
 //! This module contains the coverage analysis for the project.
-use std::vec;
 
 mod cobertura;
 
@@ -12,7 +11,7 @@ trait CoverageProvider {
 /// Represents the coverage statistics for a single project or coverage file.
 /// This will be used to calculate the overall coverage for the project.
 /// This contains list of files with their coverage stats.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Coverage {
     files: Vec<CoverageFile>,
 }
@@ -26,18 +25,15 @@ impl Coverage {
             .map_err(|err| format!("Failed to read coverage file: {}", err))?;
 
         let provider = Coverage::create_provider_from_content(&content)
-            .map_err(|err| format!("Failed to create coverage provider: {}", err))?;
-    
-        let coverage = provider.load_coverage()
+            .map_err(|err| {
+                format!("Failed to create coverage provider: {}", err)
+            })?;
+
+        let coverage = provider
+            .load_coverage()
             .map_err(|err| format!("Failed to load coverage files: {}", err))?;
 
         Ok(coverage)
-    }
-
-    pub fn new() -> Coverage {
-        Coverage { 
-            files: vec![] 
-        }
     }
 
     pub fn add_file(&mut self, file: CoverageFile) {
@@ -47,8 +43,10 @@ impl Coverage {
     pub fn get_file_count(&self) -> usize {
         self.files.len()
     }
-    
-    fn create_provider_from_content(content: &str) -> Result<Box<dyn CoverageProvider>, String> {
+
+    fn create_provider_from_content(
+        content: &str,
+    ) -> Result<Box<dyn CoverageProvider>, String> {
         let provider = "cobertura";
 
         match provider {

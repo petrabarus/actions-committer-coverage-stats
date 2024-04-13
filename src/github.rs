@@ -41,7 +41,11 @@ impl GitHubClient {
         self.request_post_issue_comment(pull_request_number, &body)
     }
 
-    fn request_post_issue_comment(&self, pull_request_number: u32, body: &str) -> Result<(), String> {
+    fn request_post_issue_comment(
+        &self,
+        pull_request_number: u32,
+        body: &str,
+    ) -> Result<(), String> {
         let url = self.create_pr_comment_url(pull_request_number);
 
         let data = object! {
@@ -61,12 +65,10 @@ impl GitHubClient {
         match result {
             Ok(result) => match result.status() {
                 reqwest::StatusCode::CREATED => Ok(()),
-                status => {
-                    Err(format!(
-                        "Failed to send request: {}",
-                        status.canonical_reason().unwrap_or("Unknown")
-                    ))
-                }
+                status => Err(format!(
+                    "Failed to send request: {}",
+                    status.canonical_reason().unwrap_or("Unknown")
+                )),
             },
             Err(err) => Err(format!("Failed to send request: {}", err)),
         }
@@ -83,7 +85,10 @@ impl GitHubClient {
     /// This will check the cache first before making a request to the GitHub API.
     /// If the user is not found, it will return None.
     /// If there is error in the request, it will return an error message.
-    pub fn get_user_by_email(&mut self, email: &str) -> Result<Option<GithubUser>, String> {
+    pub fn get_user_by_email(
+        &mut self,
+        email: &str,
+    ) -> Result<Option<GithubUser>, String> {
         if let Some(user) = self.user_cache.get(email) {
             return match user {
                 GitHubUserCacheRecord::Some(user) => Ok(Some(user.clone())),
@@ -92,15 +97,19 @@ impl GitHubClient {
             };
         }
 
-        let user = self.request_search_user_by_email(email)
-            .map_err(|err| format!("Failed to search user by email: {}", err))?;
+        let user = self.request_search_user_by_email(email).map_err(|err| {
+            format!("Failed to search user by email: {}", err)
+        })?;
 
         self.cache_user(email, &user);
 
         Ok(user)
     }
 
-    fn request_search_user_by_email(&self, email: &str) -> Result<Option<GithubUser>, String> {
+    fn request_search_user_by_email(
+        &self,
+        email: &str,
+    ) -> Result<Option<GithubUser>, String> {
         let url = format!("{}/search/users?q={}", self.api_url, email);
         let client = reqwest::blocking::Client::new();
         let result = client
@@ -113,16 +122,15 @@ impl GitHubClient {
         match result {
             Ok(result) => match result.status() {
                 reqwest::StatusCode::OK => {
-                    let response = result.text()
-                        .map_err(|err| format!("Failed to read response: {}", err))?;
+                    let response = result.text().map_err(|err| {
+                        format!("Failed to read response: {}", err)
+                    })?;
                     GitHubClient::parse_user_from_search_response(&response)
                 }
-                status => {
-                    Err(format!(
-                        "Failed to send request: {}",
-                        status.canonical_reason().unwrap_or("Unknown")
-                    ))
-                }
+                status => Err(format!(
+                    "Failed to send request: {}",
+                    status.canonical_reason().unwrap_or("Unknown")
+                )),
             },
             Err(err) => Err(format!("Failed to send request: {}", err)),
         }
@@ -137,7 +145,9 @@ impl GitHubClient {
         self.user_cache.insert(email.to_string(), record);
     }
 
-    fn parse_user_from_search_response(response: &str) -> Result<Option<GithubUser>, String> {
+    fn parse_user_from_search_response(
+        response: &str,
+    ) -> Result<Option<GithubUser>, String> {
         let json = json::parse(response);
         if let Err(err) = json {
             return Err(format!("Failed to parse JSON: {}", err));
@@ -153,7 +163,7 @@ impl GitHubClient {
         }
 
         let items = json["items"].clone();
-        if items.is_array() && !items.is_empty(){
+        if items.is_array() && !items.is_empty() {
             let item = &items[0];
             let username = item["login"].to_string();
             let avatar_url = item["avatar_url"].to_string();
@@ -240,10 +250,7 @@ mod tests {
 
     #[test]
     fn test_parse_pull_request_number_from_ref() {
-        assert_eq!(
-            parse_pr_number_from_ref("refs/pull/123/merge"),
-            Some(123)
-        );
+        assert_eq!(parse_pr_number_from_ref("refs/pull/123/merge"), Some(123));
         assert_eq!(parse_pr_number_from_ref("refs/heads/main"), None);
     }
 
@@ -285,7 +292,10 @@ mod tests {
         assert!(user.is_some());
         let user = user.unwrap();
         assert_eq!(user.username, "testuser");
-        assert_eq!(user.avatar_url, "https://avatars.githubusercontent.com/u/1234567890?v=4");
+        assert_eq!(
+            user.avatar_url,
+            "https://avatars.githubusercontent.com/u/1234567890?v=4"
+        );
         assert_eq!(user.url, "https://api.github.com/users/testuser");
     }
 

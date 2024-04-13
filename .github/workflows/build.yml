@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Rust
         run: rustup update stable
@@ -39,6 +41,8 @@ jobs:
 
       - name: Coverage Stats
         uses: petrabarus/github-action-committer-coverage-stats@main
+        with:
+          workspace: ${{ github.workspace }}
 
       - name: Generate Reports
         run: |
@@ -73,6 +77,8 @@ jobs:
     needs: 
       - build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      packages: write # Enable the workflow to publish to docker registry
     steps:
       - name: Release
         run: echo "Release"

@@ -51,7 +51,12 @@ pub struct CommitterCoverageUserStat {
 }
 
 impl CommitterCoverageUserStat {
-    pub fn new(username: &str, email: &str, lines: u32, covered: u32) -> CommitterCoverageUserStat {
+    pub fn new(
+        username: &str,
+        email: &str,
+        lines: u32,
+        covered: u32,
+    ) -> CommitterCoverageUserStat {
         let percent_covered = match lines {
             0 => 0.0,
             _ => covered as f32 / lines as f32 * 100.0,
@@ -64,7 +69,7 @@ impl CommitterCoverageUserStat {
             percent_covered,
         }
     }
-    
+
     pub fn get_username(&self) -> &str {
         &self.username
     }
@@ -115,25 +120,17 @@ pub fn load_coverage_files() {
 
 #[cfg(test)]
 mod tests {
-    
+
     use super::*;
 
     #[test]
     fn test_committer_coverage_user_stat_percent_covered() {
-        let user_stat = CommitterCoverageUserStat::new(
-            "user",
-            "user@example.com",
-            100,
-            50,
-        );
+        let user_stat =
+            CommitterCoverageUserStat::new("user", "user@example.com", 100, 50);
         assert_eq!(user_stat.get_percent_covered(), 50.0);
 
-        let user_stat = CommitterCoverageUserStat::new(
-            "user2",
-            "user2@example.com",
-            0,
-            0,
-        );
+        let user_stat =
+            CommitterCoverageUserStat::new("user2", "user2@example.com", 0, 0);
         assert_eq!(user_stat.get_percent_covered(), 0.0);
     }
 

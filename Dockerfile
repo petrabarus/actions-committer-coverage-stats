@@ -55,4 +55,3 @@ ENV RUST_LOG=info
 ENV RUST_BACKTRACE=full
 
 CMD [ "app" ]
-
