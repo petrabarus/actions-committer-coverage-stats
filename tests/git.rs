@@ -16,12 +16,12 @@ mod tests {
         let commit_hash = commit_hash.unwrap();
         assert!(!commit_hash.is_empty());
 
-        let blame_file = git.get_blame_file("src/lib.rs");
+        let blame_file = git.get_file_blame("src/lib.rs");
         assert!(blame_file.is_ok());
         let blame_file = blame_file.unwrap();
 
-        for line in blame_file.get_lines() {
-            println!("{}", line);
+        for (line_num, line_blame) in blame_file.get_lines() {
+            println!("{} {}", line_num, line_blame);
         }
     }
 }

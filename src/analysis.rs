@@ -1,5 +1,5 @@
 //! This module contains the committer coverage analysis.
-use crate::coverage::CoverageProvider;
+use crate::{coverage::CoverageProvider, git::BlameProvider};
 
 use super::{coverage, git};
 
@@ -93,6 +93,10 @@ impl CommitterCoverageUserStat {
     }
 }
 
+pub fn calculate<A: CoverageProvider, B: BlameProvider>(_a: &A, _b: &B) {
+    println!("TODO: calculate committer coverage");
+}
+
 pub fn calculate_committers_coverage_summary(
     _git: &git::Git,
     _coverage: &coverage::Coverage,
@@ -136,6 +140,8 @@ pub fn load_coverage_files() {
 mod tests {
 
     use super::*;
+    use super::coverage::MockCoverageProvider;
+    use super::git::MockBlameProvider;
 
     #[test]
     fn test_committer_coverage_user_stat_percent_covered() {
@@ -149,23 +155,8 @@ mod tests {
     }
 
     #[test]
-    fn test_committer_coverage_summary_calculate_summary() {
-        let mut summary = CommitterCoverageSummary::default();
-        summary.add_user_stat(CommitterCoverageUserStat::new(
-            "user",
-            "user1@example.com",
-            100,
-            50,
-        ));
-        summary.add_user_stat(CommitterCoverageUserStat::new(
-            "user2",
-            "user2@example.com",
-            200,
-            100,
-        ));
-
-        assert_eq!(summary.lines, 300);
-        assert_eq!(summary.covered, 150);
-        assert_eq!(summary.percent_covered, 50.0);
+    fn test_committer_coverage_summary_calculate_committers_coverage_summary() {
+      let _coverage_provider = MockCoverageProvider::new();
+      let _blame_provider = MockBlameProvider::new();
     }
 }

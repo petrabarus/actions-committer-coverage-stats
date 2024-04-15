@@ -53,19 +53,6 @@ fn main() {
     let git = git::Git::new_from_path(config.get_workspace())
         .expect("Failed to load git repository");
 
-    // DEBUG: print the last commit hash
-    let last_commit = git.get_last_commit_hash()
-        .expect("Failed to get last commit hash");
-    println!("Last commit hash: {}", last_commit);
-
-    // DEBUG: print the blame file for src/main.rs
-    let blame_file = git.get_blame_file("src/main.rs")
-        .expect("Failed to get blame file");
-    println!("Blame file: {}", blame_file.get_path());
-    for line in blame_file.get_lines() {
-        println!("{}", line);
-    }
-
     let summary =
         analysis::calculate_committers_coverage_summary(&git, &coverage);
 

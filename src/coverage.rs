@@ -1,11 +1,15 @@
 //! This module contains the coverage analysis for the project.
 
 use std::collections::BTreeMap;
+use mockall::automock;
 
 mod cobertura;
+mod lcov;
 
 type CoverageFileIteratorResult = Result<Box<dyn Iterator<Item = FileCoverage>>, String>;
 /// Represents the coverage provider that can load the coverage statistics from a file.
+#[automock]
+
 pub trait CoverageProvider {
     fn get_name(&self) -> &str;
     fn iter_files(&self) -> CoverageFileIteratorResult;

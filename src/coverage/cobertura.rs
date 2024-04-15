@@ -5,8 +5,6 @@ use super::{CoverageFileIteratorResult, CoverageProvider, FileCoverage};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::collections::HashMap;
-use std::hash::Hash;
-use std::io::Read;
 
 type XmlReader = quick_xml::reader::Reader<std::io::BufReader<std::fs::File>>;
 
