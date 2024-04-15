@@ -1,4 +1,6 @@
 //! This module contains the committer coverage analysis.
+use crate::coverage::CoverageProvider;
+
 use super::{coverage, git};
 
 /// Represents the summary of the coverage for all committers.
@@ -95,6 +97,18 @@ pub fn calculate_committers_coverage_summary(
     _git: &git::Git,
     _coverage: &coverage::Coverage,
 ) -> CommitterCoverageSummary {
+
+    // loop through all files in coverage
+    for file in _coverage.iter_files().unwrap().into_iter() {
+        println!("File: {}", file.get_path());
+        // loop through all lines in file
+        for line in file.get_lines() {
+            println!("\tLine: {} - {}", line.get_line(), line.is_covered());
+            // get the committer of the line
+            // add the line to the committer's stats
+        }
+    }
+    
     let mut summary = CommitterCoverageSummary::default();
 
     // TODO: Remove this dummy data

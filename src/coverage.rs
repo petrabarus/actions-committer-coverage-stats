@@ -1,77 +1,103 @@
 //! This module contains the coverage analysis for the project.
 
+use std::collections::BTreeMap;
+
 mod cobertura;
 
+type CoverageFileIteratorResult = Result<Box<dyn Iterator<Item = FileCoverage>>, String>;
 /// Represents the coverage provider that can load the coverage statistics from a file.
-trait CoverageProvider {
+pub trait CoverageProvider {
     fn get_name(&self) -> &str;
-    fn load_coverage(&self) -> Result<Coverage, String>;
+    fn iter_files(&self) -> CoverageFileIteratorResult;
 }
 
-/// Represents the coverage statistics for a single project or coverage file.
-/// This will be used to calculate the overall coverage for the project.
-/// This contains list of files with their coverage stats.
-#[derive(Clone, Default)]
 pub struct Coverage {
-    files: Vec<CoverageFile>,
+    path: String,
+    provider: Option<Box<dyn CoverageProvider>>,
 }
 
 impl Coverage {
-    /// Creates a new coverage object from the coverage file in the given path.
-    /// It will return an error if the file cannot be read or parsed.
     pub fn new_from_path(path: &str) -> Result<Coverage, String> {
-        // read the file
-        let content = std::fs::read_to_string(path)
-            .map_err(|err| format!("Failed to read coverage file: {}", err))?;
-
-        let provider = Coverage::create_provider_from_content(&content)
-            .map_err(|err| {
-                format!("Failed to create coverage provider: {}", err)
-            })?;
-
-        let coverage = provider
-            .load_coverage()
-            .map_err(|err| format!("Failed to load coverage files: {}", err))?;
-
-        Ok(coverage)
+        let provider = cobertura::Provider::load_from_file(path)
+            .map_err(|e| format!("Failed to load coverage file: {}", e))?;
+        Ok(Coverage {
+            path: path.to_string(),
+            provider: Some(Box::new(provider)),
+        })
     }
 
-    pub fn add_file(&mut self, file: CoverageFile) {
-        self.files.push(file)
-    }
-
-    pub fn get_file_count(&self) -> usize {
-        self.files.len()
-    }
-
-    fn create_provider_from_content(
-        content: &str,
-    ) -> Result<Box<dyn CoverageProvider>, String> {
-        let provider = "cobertura";
-
-        match provider {
-            "cobertura" => {
-                let provider = cobertura::Provider::new(content);
-                Ok(Box::new(provider))
-            }
-            _ => Err(format!("Unknown coverage provider: {}", provider)),
-        }
-    }
-}
-
-/// Represents the coverage statistics for a single file.
-/// This contains the file path and the coverage stats for that file.
-#[derive(Clone, Default)]
-pub struct CoverageFile {
-    path: String,
-}
-
-impl CoverageFile {
     pub fn get_path(&self) -> &str {
         &self.path
     }
 }
 
-pub fn load_coverage_files() {
-    println!("Loading coverage files...");
+impl CoverageProvider for Coverage {
+    fn get_name(&self) -> &str {
+        match &self.provider {
+            None => "unknown",
+            Some(provider) => {
+                provider.get_name()
+            }
+        }
+    }
+
+    fn iter_files(&self) -> CoverageFileIteratorResult {
+        match &self.provider {
+            None => Err("No provider".to_string()),
+            Some(provider) => provider.iter_files(),
+        }
+    }
+}
+
+pub struct FileCoverage {
+    path: String,
+    line_cover: BTreeMap<u32, bool>,
+}
+
+impl Default for FileCoverage {
+    fn default() -> Self {
+        FileCoverage {
+            path: "".to_string(),
+            line_cover: BTreeMap::new(),
+        }
+    }
+}
+
+impl FileCoverage {
+    pub fn get_path(&self) -> &str {
+        &self.path
+    }
+
+    pub fn get_lines(&self) -> Vec<FileCoverageLine> {
+        self.line_cover.iter().map(|(line, covered)| {
+            FileCoverageLine {
+                line: *line,
+                covered: *covered,
+            }
+        }).collect()
+    }
+
+    pub fn add_line(&mut self, line_number: u32, covered: bool) {
+        self.line_cover.insert(line_number, covered);
+    }
+
+    pub fn reset(&mut self) {
+        self.path.clear();
+        self.line_cover.clear()
+    }
+}
+
+pub struct FileCoverageLine {
+    line: u32,
+    covered: bool,
+}
+
+impl FileCoverageLine {
+    pub fn get_line(&self) -> u32 {
+        self.line
+    }
+
+    pub fn is_covered(&self) -> bool {
+        self.covered
+    }
 }

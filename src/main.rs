@@ -26,25 +26,12 @@ fn print_summary_to_pr_if_available(
 }
 
 fn load_coverage_file(files: &[String]) -> Result<Coverage, String> {
-    let coverages: Vec<Coverage> = files
-        .iter()
-        .map(|file| {
-            let coverage = Coverage::new_from_path(file);
-            // print reason for failure if any
-            if let Err(err) = &coverage {
-                println!("Failed to load coverage file {}: {}", file, err);
-            }
-            coverage
-        })
-        .filter_map(Result::ok)
-        .collect();
-
-    // just return the first coverage file for now
-    if let Some(coverage) = coverages.first() {
-        Ok(coverage.clone())
-    } else {
-        Err("No coverage files loaded".to_string())
+    // just one file for now.
+    // if empty, return an error
+    if files.is_empty() {
+        return Err("No coverage files specified".to_string());
     }
+    Coverage::new_from_path(files[0].as_str())
 }
 
 fn main() {
