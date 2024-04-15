@@ -222,11 +222,23 @@ mod tests {
             CoverageFileIterator::new(path).expect("Failed to create iterator");
         let files: Vec<FileCoverage> = iter.into_iter().collect();
         assert_eq!(files.len(), 4);
-        // iter.into_iter().for_each(|f| {
-        //     println!("{}", f.get_path());
-        //     f.get_lines().iter().for_each(|l| {
-        //         println!("\t{}: {}", l.get_line(), l.is_covered());
-        //     });
-        // });
+    }
+
+    #[test]
+    fn test_coveragefileiterator_test_reader_cobertura_002() {
+        let path = "res/tests/cobertura-002.xml";
+        let iter =
+            CoverageFileIterator::new(path).expect("Failed to create iterator");
+        let files: Vec<FileCoverage> = iter.into_iter().collect();
+        assert_eq!(files.len(), 4);
+    }
+
+    #[test]
+    fn test_coveragefileiterator_test_reader_cobertura_003() {
+        let path = "res/tests/cobertura-003.xml";
+        let iter =
+            CoverageFileIterator::new(path).expect("Failed to create iterator");
+        let files: Vec<FileCoverage> = iter.into_iter().collect();
+        assert_eq!(files.len(), 2083);
     }
 }
