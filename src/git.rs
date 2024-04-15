@@ -1,7 +1,7 @@
 //! This file will analyze the codebase.
 use git2::{Blame, BlameHunk};
 use mockall::automock;
-use std::{collections::HashMap, path::Path};
+use std::{collections::BTreeMap, path::Path};
 
 /// Provides blame.
 #[automock]
@@ -93,10 +93,9 @@ impl BlameProvider for Git {
 
         let mut line_num: u32 = 0;
         for hunk in blame.iter() {
-            let res = self.iterate_blame_hunk(&hunk, &mut line_num, &mut blame_file);
-            if let Err(err) = res {
-                return Err(err);
-            }
+            let res =
+                self.iterate_blame_hunk(&hunk, &mut line_num, &mut blame_file);
+            res?
         }
         Ok(blame_file)
 
@@ -155,8 +154,8 @@ impl Git {
             *line_num += 1;
             blame_file.add_line(
                 *line_num,
-                commit_id.to_string(),
-                email.to_string(),
+                commit_id.to_string().as_str(),
+                email,
             )
         }
         Ok(())
@@ -165,31 +164,26 @@ impl Git {
 
 pub struct BlameFile {
     path: String,
-    lines: HashMap<u32, BlameLine>,
+    lines: BTreeMap<u32, BlameLine>,
 }
 
 impl BlameFile {
     pub fn new_from_path(path: &str) -> BlameFile {
         BlameFile {
             path: path.to_string(),
-            lines: HashMap::new(),
+            lines: BTreeMap::new(),
         }
     }
     pub fn get_path(&self) -> &str {
         &self.path
     }
 
-    pub fn get_lines(&self) -> &HashMap<u32, BlameLine> {
+    pub fn get_lines(&self) -> &BTreeMap<u32, BlameLine> {
         &self.lines
     }
 
-    pub fn add_line(&mut self, line: u32, commit: String, email: String) {
-        let blame_line = BlameLine {
-            line,
-            commit,
-            email,
-        };
-        self.lines.insert(line, blame_line);
+    pub fn add_line(&mut self, line: u32, commit: &str, email: &str) {
+        self.lines.insert(line, BlameLine::new(line, commit, email));
     }
 }
 
@@ -200,6 +194,13 @@ pub struct BlameLine {
 }
 
 impl BlameLine {
+    pub fn new(line: u32, commit: &str, email: &str) -> BlameLine {
+        BlameLine {
+            line,
+            commit: commit.to_string(),
+            email: email.to_string(),
+        }
+    }
     pub fn get_line(&self) -> u32 {
         self.line
     }

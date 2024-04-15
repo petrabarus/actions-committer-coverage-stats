@@ -1,7 +1,9 @@
 //! This module contains the committer coverage analysis.
-use crate::{coverage::CoverageProvider, git::BlameProvider};
-
-use super::{coverage, git};
+use super::{
+    coverage::CoverageProvider,
+    git::{BlameLine, BlameProvider},
+};
+use std::collections::{BTreeMap, HashMap};
 
 /// Represents the summary of the coverage for all committers.
 /// This will be printed to the pull request as a comment.
@@ -10,23 +12,51 @@ pub struct CommitterCoverageSummary {
     lines: u32,
     covered: u32,
     percent_covered: f32,
-    user_stats: Vec<CommitterCoverageUserStat>,
+    user_stats: HashMap<String, CommitterCoverageUserStat>,
 }
 
 impl CommitterCoverageSummary {
-    pub fn add_user_stat(&mut self, user_stat: CommitterCoverageUserStat) {
-        self.user_stats.push(user_stat);
-        self.calculate_summary();
+    /// This will reset the user stats to 0 lines and 0 covered and returns,
+    /// the previous value if exists, otherwise None.
+    pub fn reset_user(
+        &mut self,
+        email: &str,
+    ) -> Option<CommitterCoverageUserStat> {
+        let new_val = CommitterCoverageUserStat::new(email, 0, 0);
+        self.user_stats.insert(email.to_string(), new_val)
     }
 
-    fn calculate_summary(&mut self) {
-        self.lines = self.user_stats.iter().map(|s| s.lines).sum();
-        self.covered = self.user_stats.iter().map(|s| s.covered).sum();
+    /// This function increments the line coverage for a user.
+    pub fn incr_user_line_cover(&mut self, email: &str, covered: bool) {
+        self.lines += 1;
+        let covered = if covered { 1 } else { 0 };
+        self.covered += covered;
         self.percent_covered = self.covered as f32 / self.lines as f32 * 100.0;
+
+        if !self.user_stats.contains_key(email) {
+            self.reset_user(email);
+        }
+
+        let stat = self.user_stats.get_mut(email).unwrap();
+        stat.lines += 1;
+        stat.covered += covered;
+        stat.percent_covered = stat.covered as f32 / stat.lines as f32 * 100.0;
     }
 
-    pub fn get_user_stats(&self) -> &Vec<CommitterCoverageUserStat> {
+    pub fn get_user_stats(
+        &self,
+    ) -> &HashMap<String, CommitterCoverageUserStat> {
         &self.user_stats
+    }
+
+    pub fn set_user_stat(&mut self, email: &str, lines: u32, covered: u32) {
+        if !self.user_stats.contains_key(email) {
+            self.reset_user(email);
+        }
+
+        let stat = self.user_stats.get_mut(email).unwrap();
+        stat.lines = lines;
+        stat.covered = covered;
     }
 
     pub fn get_lines(&self) -> u32 {
@@ -42,10 +72,57 @@ impl CommitterCoverageSummary {
     }
 }
 
+impl CommitterCoverageSummary {
+    pub fn from_coverage_file_and_blame<
+        A: CoverageProvider,
+        B: BlameProvider,
+    >(
+        coverage: &A,
+        blame: &B,
+    ) -> Result<CommitterCoverageSummary, String> {
+        let file_iter = coverage
+            .iter_files()
+            .map_err(|e| format!("Failed to get coverage files: {}", e))?;
+        let mut summary: CommitterCoverageSummary =
+            CommitterCoverageSummary::default();
+
+        // loop through all files in coverage
+        for file in file_iter.into_iter() {
+            let path = file.get_path();
+            let blame_file = blame
+                .get_file_blame(path)
+                .map_err(|e| format!("Failed to get blame file: {}", e))?;
+
+            CommitterCoverageSummary::calculate_by_lines(
+                file.get_lines(),
+                blame_file.get_lines(),
+                &mut summary,
+            )
+        }
+
+        Ok(summary)
+    }
+
+    fn calculate_by_lines(
+        coverage_lines: &BTreeMap<u32, bool>,
+        blame_lines: &BTreeMap<u32, BlameLine>,
+        summary: &mut CommitterCoverageSummary,
+    ) {
+        for (line_num, covered) in coverage_lines.iter() {
+            let blame_line = blame_lines.get(line_num);
+            if blame_line.is_none() {
+                continue;
+            }
+            let blame_line = blame_line.unwrap();
+            let email = blame_line.get_email();
+            summary.incr_user_line_cover(email, *covered);
+        }
+    }
+}
+
 /// Represents the coverage statistics for a single committer.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CommitterCoverageUserStat {
-    username: String,
     email: String,
     lines: u32,
     covered: u32,
@@ -54,7 +131,6 @@ pub struct CommitterCoverageUserStat {
 
 impl CommitterCoverageUserStat {
     pub fn new(
-        username: &str,
         email: &str,
         lines: u32,
         covered: u32,
@@ -64,16 +140,11 @@ impl CommitterCoverageUserStat {
             _ => covered as f32 / lines as f32 * 100.0,
         };
         CommitterCoverageUserStat {
-            username: username.to_string(),
             email: email.to_string(),
             lines,
             covered,
             percent_covered,
         }
-    }
-
-    pub fn get_username(&self) -> &str {
-        &self.username
     }
 
     pub fn get_email(&self) -> &str {
@@ -93,45 +164,6 @@ impl CommitterCoverageUserStat {
     }
 }
 
-pub fn calculate<A: CoverageProvider, B: BlameProvider>(_a: &A, _b: &B) {
-    println!("TODO: calculate committer coverage");
-}
-
-pub fn calculate_committers_coverage_summary(
-    _git: &git::Git,
-    _coverage: &coverage::Coverage,
-) -> CommitterCoverageSummary {
-
-    // loop through all files in coverage
-    for file in _coverage.iter_files().unwrap().into_iter() {
-        println!("File: {}", file.get_path());
-        // loop through all lines in file
-        for line in file.get_lines() {
-            println!("\tLine: {} - {}", line.get_line(), line.is_covered());
-            // get the committer of the line
-            // add the line to the committer's stats
-        }
-    }
-    
-    let mut summary = CommitterCoverageSummary::default();
-
-    // TODO: Remove this dummy data
-    summary.add_user_stat(CommitterCoverageUserStat::new(
-        "testing",
-        "testing@example.com",
-        100,
-        50,
-    ));
-    summary.add_user_stat(CommitterCoverageUserStat::new(
-        "testing2",
-        "testing2@example.com",
-        200,
-        190,
-    ));
-
-    summary
-}
-
 pub fn load_coverage_files() {
     println!("TODO: load coverage files");
 }
@@ -140,23 +172,57 @@ pub fn load_coverage_files() {
 mod tests {
 
     use super::*;
-    use super::coverage::MockCoverageProvider;
-    use super::git::MockBlameProvider;
 
     #[test]
     fn test_committer_coverage_user_stat_percent_covered() {
         let user_stat =
-            CommitterCoverageUserStat::new("user", "user@example.com", 100, 50);
+            CommitterCoverageUserStat::new("user@example.com", 100, 50);
         assert_eq!(user_stat.get_percent_covered(), 50.0);
 
         let user_stat =
-            CommitterCoverageUserStat::new("user2", "user2@example.com", 0, 0);
+            CommitterCoverageUserStat::new("user2@example.com", 0, 0);
         assert_eq!(user_stat.get_percent_covered(), 0.0);
     }
 
     #[test]
-    fn test_committer_coverage_summary_calculate_committers_coverage_summary() {
-      let _coverage_provider = MockCoverageProvider::new();
-      let _blame_provider = MockBlameProvider::new();
+    fn test_committer_coverage_summary_set_user_stat() {
+        let mut summary = CommitterCoverageSummary::default();
+
+        let email = "user@example.com";
+        summary.reset_user(email);
+        summary.set_user_stat(email, 10, 5);
+        let stats = summary.get_user_stats();
+        let user_stat = stats.get(email).unwrap();
+
+        assert_eq!(10, user_stat.get_lines());
+        assert_eq!(5, user_stat.get_covered());
+    }
+
+    #[test]
+    fn test_calculate_by_lines() {
+        let mut summary = CommitterCoverageSummary::default();
+        let coverage_lines =
+            vec![(1, true), (2, false), (3, true), (4, false), (5, true)]
+                .into_iter()
+                .collect();
+        let blame_lines = vec![
+            (1, BlameLine::new(1, "commit1", "user1")),
+            (2, BlameLine::new(2, "commit2", "user2")),
+            (3, BlameLine::new(3, "commit3", "user3")),
+            (4, BlameLine::new(4, "commit4", "user4")),
+            (5, BlameLine::new(5, "commit5", "user5")),
+        ]
+        .into_iter()
+        .collect();
+
+        CommitterCoverageSummary::calculate_by_lines(
+            &coverage_lines,
+            &blame_lines,
+            &mut summary,
+        );
+
+        assert_eq!(5, summary.get_lines());
+        assert_eq!(3, summary.get_covered());
+        assert_eq!(5, summary.get_user_stats().len());
     }
 }

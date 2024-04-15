@@ -12,7 +12,7 @@ Default: `80`
 ### 1.2 `coverage_files`
 
 The list of coverage files to be analyzed. The coverage files should be in the format of `path/to/coverage.xml`. Multiple coverage files can be provided by separating them with a comma.
-At the moment, this only supports Cobertura XML format.
+**Note**: At the moment, this only supports Cobertura XML format.
 
 Default: `coverage.xml`
 
@@ -24,10 +24,35 @@ This action will post a comment on the pull request with the list of committers 
 
 ## 3. Example Usage
 
+You can use this action in your workflow by adding the following step in your workflow file.
+
 ```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # The permissions are required to post a comment on the pull request.
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Generate Coverage
+      # This is where you run your tests and generate the coverage files.
+      run: |
+        echo "Generate Coverage"
+    - name: Coverage Stats
+      uses: petrabarus/github-action-committer-coverage-stats@main
+      with:
+        workspace: ${{ github.workspace }}
 ```
 
-## 4. Troubleshooting
+## 4. Roadmap
+
+Some of the features that are planned to be added in the future are:
+- [ ] Support for multiple code coverage formats, e.g. lcov, etc.
+- [ ] Send data to external services, e.g. Zapier, Slack, etc.
+- [ ] File exclusion list for the code coverage analysis.
 
 ## 5. License
 

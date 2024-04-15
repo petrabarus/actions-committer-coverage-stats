@@ -68,7 +68,7 @@ impl CoverageFileIterator {
             Err(e) => {
                 let pos = self.reader.buffer_position();
                 eprintln!("Error at position {}: {:?}", pos, e);
-                return ReadEventReturn::End;
+                ReadEventReturn::End
             }
             Ok(Event::Start(e)) => {
                 self.inc_level();
@@ -106,8 +106,8 @@ impl CoverageFileIterator {
         e: &quick_xml::events::BytesStart,
         coverage_file: &mut FileCoverage,
     ) -> ReadEventReturn {
-        let tag_name = get_start_tag_name(&e);
-        let attr = get_attributes(&e);
+        let tag_name = get_start_tag_name(e);
+        let attr = get_attributes(e);
         match (tag_name.as_str(), self.level) {
             ("class", 5) => {
                 coverage_file.reset();
@@ -119,7 +119,7 @@ impl CoverageFileIterator {
                     ReadEventReturn::End
                 }
             }
-            ("line", 6 | 7 | 8) => {
+            ("line", 6..=8) => {
                 let number = attr.get("number");
                 let hits = attr.get("hits");
                 if let (Some(number), Some(hits)) = (number, hits) {
@@ -142,7 +142,7 @@ impl CoverageFileIterator {
         e: &quick_xml::events::BytesEnd,
         _coverage_file: &mut FileCoverage,
     ) -> ReadEventReturn {
-        let tag_name = get_end_tag_name(&e);
+        let tag_name = get_end_tag_name(e);
         match (tag_name.as_str(), self.level) {
             ("class", 5) => ReadEventReturn::Return,
             _ => ReadEventReturn::Continue,

@@ -1,12 +1,13 @@
 // This is the main entry point of the program.
 use github_action_committer_coverage_stats::{
-    analysis, config, coverage::Coverage, git, github,
+    analysis::CommitterCoverageSummary, config::Config, coverage::Coverage,
+    git::Git, github, github::GitHubClient,
 };
 
 fn print_summary_to_pr_if_available(
-    gh: &github::GitHubClient,
+    gh: &GitHubClient,
     github_ref: &str,
-    summary: &analysis::CommitterCoverageSummary,
+    summary: &CommitterCoverageSummary,
     min_threshold: f32,
 ) {
     let pull_request_number = match github::parse_pr_number_from_ref(github_ref)
@@ -36,12 +37,12 @@ fn load_coverage_file(files: &[String]) -> Result<Coverage, String> {
 
 fn main() {
     // panic if the config cannot be loaded
-    let config = match config::Config::new_from_env() {
+    let config = match Config::new_from_env() {
         Ok(config) => config,
         Err(err) => panic!("Problem loading config: {}", err),
     };
 
-    let gh = github::GitHubClient::new(
+    let gh = GitHubClient::new(
         config.get_github_api_url(),
         config.get_github_repo(),
         config.get_github_token(),
@@ -50,11 +51,12 @@ fn main() {
     let coverage = load_coverage_file(config.get_files())
         .expect("Failed to load coverage file");
 
-    let git = git::Git::new_from_path(config.get_workspace())
+    let git = Git::new_from_path(config.get_workspace())
         .expect("Failed to load git repository");
 
     let summary =
-        analysis::calculate_committers_coverage_summary(&git, &coverage);
+        CommitterCoverageSummary::from_coverage_file_and_blame(&coverage, &git)
+            .expect("Failed to calculate committers coverage summary");
 
     print_summary_to_pr_if_available(
         &gh,

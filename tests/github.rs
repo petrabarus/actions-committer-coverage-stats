@@ -17,12 +17,7 @@ mod tests {
         let client = create_client();
 
         let mut summary = CommitterCoverageSummary::default();
-        summary.add_user_stat(CommitterCoverageUserStat::new(
-            "petrabarus",
-            "user@example.com",
-            100,
-            50,
-        ));
+        summary.set_user_stat("user@example.com", 100, 50);
 
         let min_threshold = 80.0;
         let res = client.print_summary_to_pr(1, &summary, min_threshold);

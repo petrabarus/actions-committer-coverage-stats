@@ -1,12 +1,13 @@
 //! This module contains the coverage analysis for the project.
 
-use std::collections::BTreeMap;
 use mockall::automock;
+use std::collections::BTreeMap;
 
 mod cobertura;
 mod lcov;
 
-type CoverageFileIteratorResult = Result<Box<dyn Iterator<Item = FileCoverage>>, String>;
+type CoverageFileIteratorResult =
+    Result<Box<dyn Iterator<Item = FileCoverage>>, String>;
 /// Represents the coverage provider that can load the coverage statistics from a file.
 #[automock]
 
@@ -39,9 +40,7 @@ impl CoverageProvider for Coverage {
     fn get_name(&self) -> &str {
         match &self.provider {
             None => "unknown",
-            Some(provider) => {
-                provider.get_name()
-            }
+            Some(provider) => provider.get_name(),
         }
     }
 
@@ -55,14 +54,15 @@ impl CoverageProvider for Coverage {
 
 pub struct FileCoverage {
     path: String,
-    line_cover: BTreeMap<u32, bool>,
+    /// Maps line number to whether it was covered or not.
+    lines: BTreeMap<u32, bool>,
 }
 
 impl Default for FileCoverage {
     fn default() -> Self {
         FileCoverage {
             path: "".to_string(),
-            line_cover: BTreeMap::new(),
+            lines: BTreeMap::new(),
         }
     }
 }
@@ -72,22 +72,17 @@ impl FileCoverage {
         &self.path
     }
 
-    pub fn get_lines(&self) -> Vec<FileCoverageLine> {
-        self.line_cover.iter().map(|(line, covered)| {
-            FileCoverageLine {
-                line: *line,
-                covered: *covered,
-            }
-        }).collect()
+    pub fn get_lines(&self) -> &BTreeMap<u32, bool> {
+        &self.lines
     }
 
     pub fn add_line(&mut self, line_number: u32, covered: bool) {
-        self.line_cover.insert(line_number, covered);
+        self.lines.insert(line_number, covered);
     }
 
     pub fn reset(&mut self) {
         self.path.clear();
-        self.line_cover.clear()
+        self.lines.clear()
     }
 }
 
