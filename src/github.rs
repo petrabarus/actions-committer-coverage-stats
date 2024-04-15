@@ -344,7 +344,7 @@ mod tests {
             user.avatar_url,
             "https://avatars.githubusercontent.com/u/1234567890?v=4"
         );
-        assert_eq!(user.url, "https://api.github.com/users/testuser");
+        assert_eq!(user.url, "https://github.com/testuser");
     }
 
     #[test]
