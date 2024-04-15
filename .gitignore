@@ -21,3 +21,5 @@ target/
 default**.profraw
 coverage.xml
 lcov.info
+
+.DS_Store
