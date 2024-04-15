@@ -28,7 +28,7 @@ mod tests {
     #[ignore = "This test requires a valid token"]
     #[test]
     fn test_githubclient_get_user_by_email_found() {
-        let mut client = create_client();
+        let client = create_client();
 
         let user = client.get_user_by_email("test@example.com");
 
@@ -42,7 +42,7 @@ mod tests {
     #[ignore = "This test requires a valid token"]
     #[test]
     fn test_githubclient_get_user_by_email_not_found() {
-        let mut client = create_client();
+        let client = create_client();
 
         let user = client.get_user_by_email("testxxxxxxxxxxx@example.com");
 
