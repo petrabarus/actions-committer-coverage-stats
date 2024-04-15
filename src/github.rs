@@ -169,7 +169,7 @@ impl GitHubClient {
             let item = &items[0];
             let username = item["login"].to_string();
             let avatar_url = item["avatar_url"].to_string();
-            let url = item["url"].to_string();
+            let url = item["html_url"].to_string();
 
             Ok(Some(GithubUser {
                 username,
