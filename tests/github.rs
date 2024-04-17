@@ -17,7 +17,8 @@ mod tests {
         let client = create_client();
 
         let mut summary = CommitterCoverageSummary::default();
-        summary.set_user_stat("user@example.com", 100, 50);
+        summary.create_user_stat_if_not_exists("user@example.com", None);
+        summary.set_user_stat("user@example.com", 100, 50).expect("User does not exist");
 
         let min_threshold = 80.0;
         let res = client.print_summary_to_pr(1, &summary, min_threshold);

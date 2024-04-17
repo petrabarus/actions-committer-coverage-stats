@@ -1,6 +1,7 @@
 //! This file contains the GitHub API client and its implementation.
 //use curl::easy::{Easy, List};
 
+use email_address::EmailAddress;
 use std::collections::HashMap;
 
 use crate::analysis::CommitterCoverageUserStat;
@@ -250,26 +251,10 @@ impl GitHubClient {
                 "❌"
             };
 
-            let email = user_stat.get_email();
-
-            let user = match self.get_user_by_email(email) {
-                Err(err) => {
-                    eprintln!("Failed to get user by email, got error when creating summary table: {}", err);
-                    "unknown".to_string()
-                }
-                Ok(user) => {
-                    match user {
-                        None => {
-                            eprintln!("Received None user when creating summary table");
-                            "unknown".to_string()
-                        }
-                        Some(user) => format!(
-                        "<a href=\"{}\"><img src=\"{}\" width=\"20\"/></a> {}",
-                        user.url, user.avatar_url, user.username
-                    ),
-                    }
-                }
-            };
+            let user = self
+                .create_summary_content_table_row_user_display(
+                    &user_stat,
+                );
 
             table.push_str(&format!(
                 "| {} | {} | {} | {:.2} {} |\n",
@@ -282,6 +267,45 @@ impl GitHubClient {
         }
 
         table
+    }
+
+    fn create_summary_content_table_row_user_display(
+        &self,
+        user_stat: &CommitterCoverageUserStat,
+    ) -> String {
+        let email = user_stat.get_email();
+        let name = user_stat.get_name();
+
+        if !EmailAddress::is_valid(email) {
+            eprintln!("Invalid email: {}", email);
+            return self.must_get_name(&name);
+        }
+
+        match self.get_user_by_email(email) {
+            Ok(user) => match user {
+                Some(user) => format!(
+                    "<a href=\"{}\"><img src=\"{}\" width=\"20\"/></a> {}",
+                    user.url, user.avatar_url, user.username
+                ),
+                None => {
+                    eprintln!("Received None user when creating summary table");
+                    self.must_get_name(&name)
+                }
+            },
+            Err(err) => {
+                eprintln!("Failed to get user by email, got error when creating summary table: {}", err);
+                self.must_get_name(&name)
+            }
+        }
+    }
+
+    fn must_get_name(&self, name: &Option<String>) -> String {
+        if let Some(name) = name {
+            name.to_string()
+        } else {
+            eprintln!("Email and name are both invalid");
+            "unknown".to_string()
+        }
     }
 }
 

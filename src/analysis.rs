@@ -16,14 +16,21 @@ pub struct CommitterCoverageSummary {
 }
 
 impl CommitterCoverageSummary {
-    /// This will reset the user stats to 0 lines and 0 covered and returns,
-    /// the previous value if exists, otherwise None.
+    /// This will reset the user stats to 0 lines and 0 covered.
+    /// If the user does not exist, it will return an error.
     pub fn reset_user(
         &mut self,
         email: &str,
-    ) -> Option<CommitterCoverageUserStat> {
-        let new_val = CommitterCoverageUserStat::new(email, 0, 0);
-        self.user_stats.insert(email.to_string(), new_val)
+    ) -> Result<(), String> {
+        if !self.user_stats.contains_key(email) {
+            return Err(format!("User {} does not exist", email));
+        }
+
+        let user_stat = self.user_stats.get_mut(email).unwrap();
+        user_stat.lines = 0;
+        user_stat.covered = 0;
+
+        Ok(())
     }
 
     /// This function increments the line coverage for a user.
@@ -33,14 +40,19 @@ impl CommitterCoverageSummary {
         self.covered += covered;
         self.percent_covered = self.covered as f32 / self.lines as f32 * 100.0;
 
-        if !self.user_stats.contains_key(email) {
-            self.reset_user(email);
-        }
-
         let stat = self.user_stats.get_mut(email).unwrap();
         stat.lines += 1;
         stat.covered += covered;
         stat.percent_covered = stat.covered as f32 / stat.lines as f32 * 100.0;
+    }
+
+    pub fn create_user_stat_if_not_exists(&mut self, email: &str, name: Option<String>) {
+        if !self.user_stats.contains_key(email) {
+            self.user_stats.insert(
+                email.to_string(),
+                CommitterCoverageUserStat::new(email, name, 0, 0),
+            );
+        }
     }
 
     pub fn get_user_stats(
@@ -49,14 +61,16 @@ impl CommitterCoverageSummary {
         &self.user_stats
     }
 
-    pub fn set_user_stat(&mut self, email: &str, lines: u32, covered: u32) {
+    pub fn set_user_stat(&mut self, email: &str, lines: u32, covered: u32) -> Result<(), String> {
         if !self.user_stats.contains_key(email) {
-            self.reset_user(email);
+            return Err(format!("User {} does not exist. Create new one", email));
         }
 
         let stat = self.user_stats.get_mut(email).unwrap();
         stat.lines = lines;
         stat.covered = covered;
+
+        Ok(())
     }
 
     pub fn get_lines(&self) -> u32 {
@@ -106,8 +120,10 @@ impl CommitterCoverageSummary {
                     return Err(format!("Failed to get blame file: {}", e));
                 }
             }
-
+            
             let blame_file = blame_file.unwrap();
+            eprintln!("===================================");
+            eprintln!("Blame file: {:?}", blame_file.get_path());
             CommitterCoverageSummary::calculate_by_lines(
                 file.get_lines(),
                 blame_file.get_lines(),
@@ -129,28 +145,21 @@ impl CommitterCoverageSummary {
                 continue;
             }
             let blame_line = blame_line.unwrap();
-            let key = CommitterCoverageSummary::get_key_from_blame_line(blame_line);
-            summary.incr_user_line_cover(key, *covered);
+            let email = &blame_line.must_get_email();
+            let name = blame_line.get_name();
+            eprintln!("Email: {}, Name: {}", email, name.clone().unwrap_or("None".to_string()));
+            summary.create_user_stat_if_not_exists(email, name.clone());
+            summary.incr_user_line_cover(email, *covered);
         }
-    }
-
-    fn get_key_from_blame_line(blame_line: &BlameLine) -> &str {
-        if let Some(email) = blame_line.get_email() {
-            return email;
-        }
-        if let Some(name) = blame_line.get_name() {
-            return name;
-        }
-        "unknown"
     }
 }
 
 /// Represents the coverage statistics for a single committer.
 #[derive(Clone, Default)]
 pub struct CommitterCoverageUserStat {
-    // The user id of the committer. If the email is available, it should be used.
-    // Otherwise, the name should be used.
-    user_id: String,
+    // The email of the user.
+    email: String,
+    name: Option<String>,
     lines: u32,
     covered: u32,
     percent_covered: f32,
@@ -158,7 +167,8 @@ pub struct CommitterCoverageUserStat {
 
 impl CommitterCoverageUserStat {
     pub fn new(
-        user_id: &str,
+        email: &str,
+        name: Option<String>,
         lines: u32,
         covered: u32,
     ) -> CommitterCoverageUserStat {
@@ -167,7 +177,8 @@ impl CommitterCoverageUserStat {
             _ => covered as f32 / lines as f32 * 100.0,
         };
         CommitterCoverageUserStat {
-            user_id: user_id.to_string(),
+            email: email.to_string(),
+            name,
             lines,
             covered,
             percent_covered,
@@ -175,7 +186,11 @@ impl CommitterCoverageUserStat {
     }
 
     pub fn get_email(&self) -> &str {
-        &self.user_id
+        &self.email
+    }
+
+    pub fn get_name(&self) -> &Option<String> {
+        &self.name
     }
 
     pub fn get_lines(&self) -> u32 {
@@ -203,11 +218,11 @@ mod tests {
     #[test]
     fn test_committer_coverage_user_stat_percent_covered() {
         let user_stat =
-            CommitterCoverageUserStat::new("user@example.com", 100, 50);
+            CommitterCoverageUserStat::new("user@example.com", None, 100, 50);
         assert_eq!(user_stat.get_percent_covered(), 50.0);
 
         let user_stat =
-            CommitterCoverageUserStat::new("user2@example.com", 0, 0);
+            CommitterCoverageUserStat::new("user2@example.com", None, 0, 0);
         assert_eq!(user_stat.get_percent_covered(), 0.0);
     }
 
@@ -216,8 +231,8 @@ mod tests {
         let mut summary = CommitterCoverageSummary::default();
 
         let email = "user@example.com";
-        summary.reset_user(email);
-        summary.set_user_stat(email, 10, 5);
+        summary.create_user_stat_if_not_exists(email, None);
+        summary.set_user_stat(email, 10, 5).expect("User does not exist");
         let stats = summary.get_user_stats();
         let user_stat = stats.get(email).unwrap();
 

@@ -183,13 +183,20 @@ impl BlameLine {
         &self.commit
     }
 
-    pub fn get_email(&self) -> Option<&String> {
-        self.email.as_ref()
+    pub fn get_email(&self) -> &Option<String> {
+        &self.email
     }
 
-    pub fn get_name(&self) -> Option<&String> {
-        self.name.as_ref()
-        
+    pub fn must_get_email(&self) -> String {
+        self.email.clone().unwrap_or("unknown".to_string())
+    }
+
+    pub fn get_name(&self) -> &Option<String> {
+        &self.name
+    }
+
+    pub fn must_get_name(&self) -> String {
+        self.name.clone().unwrap_or("unknown".to_string())
     }
 }
 
