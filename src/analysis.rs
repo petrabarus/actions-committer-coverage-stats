@@ -129,16 +129,28 @@ impl CommitterCoverageSummary {
                 continue;
             }
             let blame_line = blame_line.unwrap();
-            let email = blame_line.get_email();
-            summary.incr_user_line_cover(email, *covered);
+            let key = CommitterCoverageSummary::get_key_from_blame_line(blame_line);
+            summary.incr_user_line_cover(key, *covered);
         }
+    }
+
+    fn get_key_from_blame_line(blame_line: &BlameLine) -> &str {
+        if let Some(email) = blame_line.get_email() {
+            return email;
+        }
+        if let Some(name) = blame_line.get_name() {
+            return name;
+        }
+        "unknown"
     }
 }
 
 /// Represents the coverage statistics for a single committer.
 #[derive(Clone, Default)]
 pub struct CommitterCoverageUserStat {
-    email: String,
+    // The user id of the committer. If the email is available, it should be used.
+    // Otherwise, the name should be used.
+    user_id: String,
     lines: u32,
     covered: u32,
     percent_covered: f32,
@@ -146,7 +158,7 @@ pub struct CommitterCoverageUserStat {
 
 impl CommitterCoverageUserStat {
     pub fn new(
-        email: &str,
+        user_id: &str,
         lines: u32,
         covered: u32,
     ) -> CommitterCoverageUserStat {
@@ -155,7 +167,7 @@ impl CommitterCoverageUserStat {
             _ => covered as f32 / lines as f32 * 100.0,
         };
         CommitterCoverageUserStat {
-            email: email.to_string(),
+            user_id: user_id.to_string(),
             lines,
             covered,
             percent_covered,
@@ -163,7 +175,7 @@ impl CommitterCoverageUserStat {
     }
 
     pub fn get_email(&self) -> &str {
-        &self.email
+        &self.user_id
     }
 
     pub fn get_lines(&self) -> u32 {
@@ -220,14 +232,16 @@ mod tests {
             vec![(1, true), (2, false), (3, true), (4, false), (5, true)]
                 .into_iter()
                 .collect();
-        let blame_lines = vec![
-            (1, BlameLine::new(1, "commit1", "user1")),
-            (2, BlameLine::new(2, "commit2", "user2")),
-            (3, BlameLine::new(3, "commit3", "user3")),
-            (4, BlameLine::new(4, "commit4", "user4")),
-            (5, BlameLine::new(5, "commit5", "user5")),
-        ]
-        .into_iter()
+
+        let blame_lines: BTreeMap<u32, BlameLine> = vec![1, 2, 3, 4, 5].iter()
+        .map(|i| {
+            (*i, BlameLine::new(
+                *i,
+                format!("commit{}", i).as_str(),
+                Some(format!("user{}", i)),
+                Some(format!("user{}", i)),
+            ))
+        }).into_iter()
         .collect();
 
         CommitterCoverageSummary::calculate_by_lines(

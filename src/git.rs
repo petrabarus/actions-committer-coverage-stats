@@ -104,11 +104,18 @@ impl Git {
             .map_err(|err| format!("Failed to find commit: {}", err))?;
 
         let author = commit.author();
-        let email = match author.email() {
-            Some(email) => email,
+        let email : Option<String> = match author.email() {
+            Some(email) => Some(email.to_string()),
             None => {
                 eprintln!("Failed to get email from author when iterating blame hunk");
-                ""
+                None
+            }
+        };
+        let name: Option<String> = match author.name() {
+            Some(name) => Some(name.to_string()),
+            None => {
+                eprintln!("Failed to get name from author when iterating blame hunk");
+                None
             }
         };
 
@@ -119,7 +126,8 @@ impl Git {
             blame_file.add_line(
                 *line_num,
                 commit_id.to_string().as_str(),
-                email,
+                email.clone(),
+                name.clone(),
             )
         }
         Ok(())
@@ -146,23 +154,25 @@ impl BlameFile {
         &self.lines
     }
 
-    pub fn add_line(&mut self, line: u32, commit: &str, email: &str) {
-        self.lines.insert(line, BlameLine::new(line, commit, email));
+    pub fn add_line(&mut self, line: u32, commit: &str, email: Option<String>, name: Option<String>) {
+        self.lines.insert(line, BlameLine::new(line, commit, email, name));
     }
 }
 
 pub struct BlameLine {
     line: u32,
     commit: String,
-    email: String,
+    email: Option<String>,
+    name: Option<String>,
 }
 
 impl BlameLine {
-    pub fn new(line: u32, commit: &str, email: &str) -> BlameLine {
+    pub fn new(line: u32, commit: &str, email: Option<String>, name: Option<String>) -> BlameLine {
         BlameLine {
             line,
             commit: commit.to_string(),
-            email: email.to_string(),
+            email,
+            name,
         }
     }
     pub fn get_line(&self) -> u32 {
@@ -173,13 +183,26 @@ impl BlameLine {
         &self.commit
     }
 
-    pub fn get_email(&self) -> &str {
-        &self.email
+    pub fn get_email(&self) -> Option<&String> {
+        self.email.as_ref()
+    }
+
+    pub fn get_name(&self) -> Option<&String> {
+        self.name.as_ref()
+        
     }
 }
 
 impl std::fmt::Display for BlameLine {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}: {} <{}>", self.line, self.commit, self.email)
+        let email = match &self.email {
+            Some(email) => email,
+            None => "",
+        };
+        let name = match &self.name {
+            Some(name) => name,
+            None => "",
+        };
+        write!(f, "{}: {} ({} <{}>)", self.line, self.commit, name, email)
     }
 }

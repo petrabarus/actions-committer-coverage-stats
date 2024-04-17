@@ -91,7 +91,6 @@ impl GitHubClient {
         &self,
         email: &str,
     ) -> Result<Option<GithubUser>, String> {
-
         let user = self.request_search_user_by_email(email).map_err(|err| {
             format!("Failed to search user by email: {}", err)
         })?;
@@ -258,16 +257,18 @@ impl GitHubClient {
                     eprintln!("Failed to get user by email, got error when creating summary table: {}", err);
                     "unknown".to_string()
                 }
-                Ok(user) => match user {
-                    None => {
-                        eprintln!("Received None user when creating summary table");
-                        "unknown".to_string()
-                    },
-                    Some(user) => format!(
+                Ok(user) => {
+                    match user {
+                        None => {
+                            eprintln!("Received None user when creating summary table");
+                            "unknown".to_string()
+                        }
+                        Some(user) => format!(
                         "<a href=\"{}\"><img src=\"{}\" width=\"20\"/></a> {}",
                         user.url, user.avatar_url, user.username
                     ),
-                },
+                    }
+                }
             };
 
             table.push_str(&format!(
