@@ -83,16 +83,31 @@ impl CommitterCoverageSummary {
         let file_iter = coverage
             .iter_files()
             .map_err(|e| format!("Failed to get coverage files: {}", e))?;
+
         let mut summary: CommitterCoverageSummary =
             CommitterCoverageSummary::default();
 
         // loop through all files in coverage
         for file in file_iter.into_iter() {
             let path = file.get_path();
-            let blame_file = blame
-                .get_file_blame(path)
-                .map_err(|e| format!("Failed to get blame file: {}", e))?;
+            let blame_file = blame.get_file_blame(path);
+            // .map_err(|e| format!("Failed to get blame file: {}", e))?;
 
+            // Handle is blame file error.
+            if let Err(e) = blame_file {
+                // Skipping if the file is not in the git tree but
+                // is in the coverage report. This may be a generated file
+                // or just ignored by git.
+                // TODO: Add input option to ignore files.
+                if e.contains("not exist in the given tree") {
+                    eprintln!("File not found in blame: {}. Skipping...", path);
+                    continue;
+                } else {
+                    return Err(format!("Failed to get blame file: {}", e));
+                }
+            }
+
+            let blame_file = blame_file.unwrap();
             CommitterCoverageSummary::calculate_by_lines(
                 file.get_lines(),
                 blame_file.get_lines(),
