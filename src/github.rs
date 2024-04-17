@@ -69,7 +69,7 @@ impl GitHubClient {
                 reqwest::StatusCode::CREATED => Ok(()),
                 status => Err(format!(
                     "Failed to send request: {}",
-                    status.canonical_reason().unwrap_or("Unknown")
+                    status.canonical_reason().unwrap_or("Unknown Status")
                 )),
             },
             Err(err) => Err(format!("Failed to send request: {}", err)),
@@ -91,13 +91,6 @@ impl GitHubClient {
         &self,
         email: &str,
     ) -> Result<Option<GithubUser>, String> {
-        if let Some(user) = self.user_cache.get(email) {
-            return match user {
-                GitHubUserCacheRecord::Some(user) => Ok(Some(user.clone())),
-                // previously searched and not found so we avoid to call the API again
-                GitHubUserCacheRecord::None => Ok(None),
-            };
-        }
 
         let user = self.request_search_user_by_email(email).map_err(|err| {
             format!("Failed to search user by email: {}", err)
@@ -131,20 +124,30 @@ impl GitHubClient {
                 }
                 status => Err(format!(
                     "Failed to send request: {}",
-                    status.canonical_reason().unwrap_or("Unknown")
+                    status.canonical_reason().unwrap_or("Unknown Status")
                 )),
             },
             Err(err) => Err(format!("Failed to send request: {}", err)),
         }
     }
 
-    pub fn cache_user(&mut self, email: &str, user: &Option<GithubUser>) {
+    pub fn store_cache_user(&mut self, email: &str, user: &Option<GithubUser>) {
         let record = match user {
             Some(user) => GitHubUserCacheRecord::Some(user.clone()),
             None => GitHubUserCacheRecord::None,
         };
 
         self.user_cache.insert(email.to_string(), record);
+    }
+
+    pub fn get_cached_user(&self, email: &str) -> Option<GithubUser> {
+        match self.user_cache.get(email) {
+            Some(record) => match record {
+                GitHubUserCacheRecord::Some(user) => Some(user.clone()),
+                GitHubUserCacheRecord::None => None,
+            },
+            None => None,
+        }
     }
 
     fn parse_user_from_search_response(
@@ -251,9 +254,15 @@ impl GitHubClient {
             let email = user_stat.get_email();
 
             let user = match self.get_user_by_email(email) {
-                Err(_) => "unknown".to_string(),
+                Err(err) => {
+                    eprintln!("Failed to get user by email, got error when creating summary table: {}", err);
+                    "unknown".to_string()
+                }
                 Ok(user) => match user {
-                    None => "unknown".to_string(),
+                    None => {
+                        eprintln!("Received None user when creating summary table");
+                        "unknown".to_string()
+                    },
                     Some(user) => format!(
                         "<a href=\"{}\"><img src=\"{}\" width=\"20\"/></a> {}",
                         user.url, user.avatar_url, user.username

@@ -39,7 +39,7 @@ impl Coverage {
 impl CoverageProvider for Coverage {
     fn get_name(&self) -> &str {
         match &self.provider {
-            None => "unknown",
+            None => "unknown provider",
             Some(provider) => provider.get_name(),
         }
     }

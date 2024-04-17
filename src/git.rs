@@ -57,33 +57,6 @@ impl Git {
 
         Ok(obj.id().to_string())
     }
-
-    // pub fn get_blame_file(&self, path: &str) -> Result<BlameFile, String> {
-
-    //     let mut line = 0;
-    //     for hunk in blame.iter() {
-    //         let commit_id = hunk.final_commit_id();
-    //         let num_lines = hunk.lines_in_hunk();
-    //         let commit = self
-    //             .repo
-    //             .find_commit(commit_id)
-    //             .map_err(|err| format!("Failed to find commit: {}", err))?;
-
-    //         let author = commit.author();
-    //         let email = author.email().unwrap_or("unknown");
-    //         for _i in 0..num_lines {
-    //             line += 1;
-    //             let blame_line = BlameLine {
-    //                 line,
-    //                 commit: commit_id.to_string(),
-    //                 email: email.to_string(),
-    //             };
-    //             blame_file.lines.push(blame_line);
-    //         }
-    //     }
-
-    //     Ok(blame_file)
-    // }
 }
 
 impl BlameProvider for Git {
@@ -98,21 +71,6 @@ impl BlameProvider for Git {
             res?
         }
         Ok(blame_file)
-
-        // for hunk in blame.iter() {
-
-        //     for _i in 0..num_lines {
-        //         line += 1;
-        //         let blame_line = BlameLine {
-        //             line,
-        //             commit: commit_id.to_string(),
-        //             email: email.to_string(),
-        //         };
-        //         blame_file.lines.push(blame_line);
-        //     }
-        // }
-
-        // Ok(blame_file)
     }
 }
 
@@ -146,7 +104,13 @@ impl Git {
             .map_err(|err| format!("Failed to find commit: {}", err))?;
 
         let author = commit.author();
-        let email = author.email().unwrap_or("unknown");
+        let email = match author.email() {
+            Some(email) => email,
+            None => {
+                eprintln!("Failed to get email from author when iterating blame hunk");
+                ""
+            }
+        };
 
         let num_lines = hunk.lines_in_hunk();
 
