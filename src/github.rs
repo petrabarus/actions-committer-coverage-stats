@@ -373,7 +373,7 @@ impl BlameProvider for GitHubClient {
         &self,
         path: &str
     ) -> Result<BlameFile, String> {
-        eprintln!("Requesting blame for file: {}", path);
+        //eprintln!("Requesting blame for file: {}", path);
         let json_result =
             self.request_graphql_blame(path).map_err(|err| {
                 format!("Failed to request blame for file {}: {}", path, err)
@@ -511,7 +511,7 @@ query {{
                     Some(email.to_string()),
                     Some(author_name.to_string()),
                 );
-                eprintln!("line: {}", line);
+                //eprintln!("line: {}", line);
                 vec.push(line);
             }
         }
