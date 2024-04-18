@@ -44,8 +44,6 @@ jobs:
 
       - name: Coverage Stats
         uses: petrabarus/github-action-committer-coverage-stats@main
-        with:
-          workspace: ${{ github.workspace }}
 
       - name: Generate Reports
         run: |

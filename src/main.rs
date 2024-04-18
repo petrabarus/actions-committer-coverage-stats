@@ -4,26 +4,21 @@ use github_action_committer_coverage_stats::{
     git::Git, github, github::GitHubClient,
 };
 
-fn print_summary_to_pr_if_available(
+fn print_summary_to_pr(
     gh: &GitHubClient,
     github_ref: &str,
     summary: &CommitterCoverageSummary,
     min_threshold: f32,
-) {
+) -> Result<(), String> {
     let pull_request_number = match github::parse_pr_number_from_ref(github_ref)
     {
         Some(pr) => pr,
         None => {
-            println!("Not a pull request, skipping summary");
-            return;
+            return Err(format!("Failed to parse pull request number from ref: {}", github_ref));
         }
     };
 
-    let pr =
-        gh.print_summary_to_pr(pull_request_number, summary, min_threshold);
-    if let Err(err) = pr {
-        panic!("Failed to print summary to pull request: {}", err);
-    }
+    gh.print_summary_to_pr(pull_request_number, summary, min_threshold)
 }
 
 fn load_coverage_file(files: &[String]) -> Result<Coverage, String> {
@@ -58,12 +53,15 @@ fn main() {
         CommitterCoverageSummary::from_coverage_file_and_blame(&coverage, &git)
             .expect("Failed to calculate committers coverage summary");
 
-    print_summary_to_pr_if_available(
-        &gh,
-        config.get_github_ref(),
-        &summary,
-        config.get_min_threshold(),
-    );
+    if config.get_github_event_name() == "pull_request" {
+        print_summary_to_pr(
+            &gh,
+            config.get_github_ref_name(),
+            &summary,
+            config.get_min_threshold(),
+        )
+        .expect("Failed to print summary to PR");
+    }
 
     println!("Success!");
 }

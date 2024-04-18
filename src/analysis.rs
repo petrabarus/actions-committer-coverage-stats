@@ -122,8 +122,6 @@ impl CommitterCoverageSummary {
             }
             
             let blame_file = blame_file.unwrap();
-            eprintln!("===================================");
-            eprintln!("Blame file: {:?}", blame_file.get_path());
             CommitterCoverageSummary::calculate_by_lines(
                 file.get_lines(),
                 blame_file.get_lines(),
@@ -147,7 +145,6 @@ impl CommitterCoverageSummary {
             let blame_line = blame_line.unwrap();
             let email = &blame_line.must_get_email();
             let name = blame_line.get_name();
-            eprintln!("Email: {}, Name: {}", email, name.clone().unwrap_or("None".to_string()));
             summary.create_user_stat_if_not_exists(email, name.clone());
             summary.incr_user_line_cover(email, *covered);
         }

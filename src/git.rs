@@ -61,6 +61,7 @@ impl Git {
 
 impl BlameProvider for Git {
     fn get_file_blame(&self, path: &str) -> Result<BlameFile, String> {
+        // we don't use ref_name for now
         let blame = self.load_repo_blame_from_path(path)?;
         let mut blame_file = BlameFile::new_from_path(path);
 
@@ -156,6 +157,10 @@ impl BlameFile {
 
     pub fn add_line(&mut self, line: u32, commit: &str, email: Option<String>, name: Option<String>) {
         self.lines.insert(line, BlameLine::new(line, commit, email, name));
+    }
+
+    pub fn set_lines_from_vec(&mut self, lines: Vec<BlameLine>) {
+        self.lines = lines.into_iter().map(|line| (line.get_line(), line)).collect();
     }
 }
 

@@ -1,12 +1,13 @@
 #[cfg(test)]
 mod tests {
     use github_action_committer_coverage_stats::analysis::*;
+    use github_action_committer_coverage_stats::git::BlameProvider;
     use github_action_committer_coverage_stats::github::*;
 
     fn create_client() -> GitHubClient {
         GitHubClient::new(
             "https://api.github.com",
-            "petrabarus/committer-coverage-summary",
+            "petrabarus/github-action-committer-coverage-stats",
             "",
         )
     }
@@ -51,5 +52,17 @@ mod tests {
         let user = user.unwrap();
         //println!("{}", user.unwrap().username);
         assert!(user.is_none());
+    }
+
+    #[ignore = "This test requires a valid token"]
+    #[test]
+    fn test_githubclient_get_file_blame() {
+        let client = create_client();
+
+        let file = "./Dockerfile";
+        let blame = client.get_file_blame(file);
+        assert!(blame.is_ok());
+        let blame = blame.unwrap();
+        assert_eq!(57, blame.get_lines().len());
     }
 }

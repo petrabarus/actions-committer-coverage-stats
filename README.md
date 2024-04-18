@@ -37,10 +37,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        # This is required to get the full git history. Otherwise, the committers' code 
+        # coverage will not be accurate.
+        fetch-depth: 0
     - name: Generate Coverage
       # This is where you run your tests and generate the coverage files.
       run: |
         echo "Generate Coverage"
+
     - name: Coverage Stats
       uses: petrabarus/github-action-committer-coverage-stats@main
       with:

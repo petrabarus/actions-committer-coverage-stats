@@ -1,0 +1,24 @@
+query {
+  repository(
+    owner:"petrabarus", 
+    name:"github-action-committer-coverage-stats"
+  ) {
+    object(expression: "ci/add-committer-stats") {
+      ... on Commit {
+        blame(path: ".gitignore") {
+        	ranges {
+            startingLine,
+            endingLine,
+            commit {
+              oid,
+              author {
+                name,
+                email
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

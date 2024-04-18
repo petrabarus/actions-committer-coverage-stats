@@ -12,10 +12,15 @@ pub struct Config {
     /// The workspace directory where the project is located.
     workspace: String,
 
+    // see: https://docs.github.com/en/actions/learn-github-actions/variables
+    // GITHUB_REF is in the format "refs/heads/branch-name"
     github_api_url: String,
     github_token: String,
     github_ref: String,
+    github_ref_name: String,
     github_repo: String,
+    github_event_name: String,
+    github_head_ref: String,
 }
 
 impl Config {
@@ -35,14 +40,20 @@ impl Config {
             .unwrap_or("80".to_string())
             .parse::<f32>()
             .map_err(|_| "min_threshold is not a valid number")?;
-
+        
         // Parse the GitHub environment variables.
         let github_ref =
             env::var("GITHUB_REF").map_err(|_| "GITHUB_REF is not set")?;
+        let github_ref_name = env::var("GITHUB_REF_NAME")
+            .map_err(|_| "GITHUB_REF_NAME is not set")?;
         let github_repo = env::var("GITHUB_REPOSITORY")
             .map_err(|_| "GITHUB_REPOSITORY is not set")?;
         let github_api_url = env::var("GITHUB_API_URL")
             .unwrap_or("https://api.github.com".to_string());
+        let github_event_name = env::var("GITHUB_EVENT_NAME")
+            .map_err(|_| "GITHUB_EVENT_NAME is not set")?;
+        let github_head_ref = env::var("GITHUB_HEAD_REF")
+            .unwrap_or("".to_string());
 
         Ok(Config {
             coverage_files,
@@ -52,7 +63,10 @@ impl Config {
             github_api_url,
             github_token,
             github_ref,
+            github_ref_name,
             github_repo,
+            github_event_name,
+            github_head_ref,
         })
     }
 
@@ -74,6 +88,18 @@ impl Config {
 
     pub fn get_github_ref(&self) -> &str {
         &self.github_ref
+    }
+
+    pub fn get_github_ref_name(&self) -> &str {
+        &self.github_ref_name
+    }
+
+    pub fn get_github_event_name(&self) -> &str {
+        &self.github_event_name
+    }
+
+    pub fn get_github_head_ref(&self) -> &str {
+        &self.github_head_ref
     }
 
     pub fn get_github_api_url(&self) -> &str {
