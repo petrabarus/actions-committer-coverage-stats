@@ -14,7 +14,10 @@ fn print_summary_to_pr(
     {
         Some(pr) => pr,
         None => {
-            return Err(format!("Failed to parse pull request number from ref: {}", github_ref));
+            return Err(format!(
+                "Failed to parse pull request number from ref: {}",
+                github_ref
+            ));
         }
     };
 
@@ -28,6 +31,19 @@ fn load_coverage_file(files: &[String]) -> Result<Coverage, String> {
         return Err("No coverage files specified".to_string());
     }
     Coverage::new_from_path(files[0].as_str())
+}
+
+fn calculate_summary_from_git_or_github_api(
+    coverage: &Coverage,
+    use_github_api_for_blame: bool,
+    git: &Git,
+    gh: &GitHubClient,
+) -> Result<CommitterCoverageSummary, String> {
+    if use_github_api_for_blame {
+        CommitterCoverageSummary::from_coverage_file_and_blame(coverage, gh)
+    } else {
+        CommitterCoverageSummary::from_coverage_file_and_blame(coverage, git)
+    }
 }
 
 fn main() {
@@ -49,9 +65,13 @@ fn main() {
     let git = Git::new_from_path(config.get_workspace())
         .expect("Failed to load git repository");
 
-    let summary =
-        CommitterCoverageSummary::from_coverage_file_and_blame(&coverage, &git)
-            .expect("Failed to calculate committers coverage summary");
+    let summary = calculate_summary_from_git_or_github_api(
+        &coverage,
+        config.get_use_github_api_for_blame(),
+        &git,
+        &gh,
+    )
+    .expect("Failed to generate summary");
 
     if config.get_github_event_name() == "pull_request" {
         print_summary_to_pr(

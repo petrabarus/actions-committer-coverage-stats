@@ -9,6 +9,10 @@ pub struct Config {
     /// User with coverage percentage below this threshold will be considered as failing.
     min_threshold: f32,
 
+    /// Whether to use the GitHub API to get the blame information.
+    /// If false, the blame information will be read from the git repository.
+    use_github_api_for_blame: bool,
+
     /// The workspace directory where the project is located.
     workspace: String,
 
@@ -40,6 +44,10 @@ impl Config {
             .unwrap_or("80".to_string())
             .parse::<f32>()
             .map_err(|_| "min_threshold is not a valid number")?;
+        let use_github_api_for_blame = env::var("INPUT_USE_GITHUB_API_FOR_BLAME")
+            .unwrap_or("false".to_string())
+            .parse::<bool>()
+            .map_err(|_| "use_github_api_for_blame is not a valid boolean")?;
         
         // Parse the GitHub environment variables.
         let github_ref =
@@ -59,7 +67,7 @@ impl Config {
             coverage_files,
             min_threshold,
             workspace,
-
+            use_github_api_for_blame,
             github_api_url,
             github_token,
             github_ref,
@@ -80,6 +88,10 @@ impl Config {
 
     pub fn get_workspace(&self) -> &str {
         &self.workspace
+    }
+
+    pub fn get_use_github_api_for_blame(&self) -> bool {
+        self.use_github_api_for_blame
     }
 
     pub fn get_github_token(&self) -> &str {
