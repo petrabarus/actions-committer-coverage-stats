@@ -50,6 +50,11 @@ jobs:
           cargo clippy --message-format json > clippy-report.json
           cargo sonar --clippy --clippy-path clippy-report.json
 
+      - name: Generate Reports
+        run: |
+          cargo clippy --message-format json > clippy-report.json
+          cargo sonar --clippy --clippy-path clippy-report.json
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
