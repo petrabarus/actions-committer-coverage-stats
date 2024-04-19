@@ -44,6 +44,7 @@ impl Config {
             .unwrap_or("80".to_string())
             .parse::<f32>()
             .map_err(|_| "min_threshold is not a valid number")?;
+        //("INPUT_USE_GITHUB_API_FOR_BLAME: {}", env::var("INPUT_USE_GITHUB_API_FOR_BLAME").unwrap_or("false".to_string()));
         let use_github_api_for_blame = env::var("INPUT_USE_GITHUB_API_FOR_BLAME")
             .unwrap_or("false".to_string())
             .parse::<bool>()

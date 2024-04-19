@@ -74,6 +74,7 @@ fn main() {
     .expect("Failed to generate summary");
 
     if config.get_github_event_name() == "pull_request" {
+        println!("Printing summary to Pull Request");
         print_summary_to_pr(
             &gh,
             config.get_github_ref_name(),
@@ -81,6 +82,8 @@ fn main() {
             config.get_min_threshold(),
         )
         .expect("Failed to print summary to PR");
+    } else {
+        eprintln!("Event {} is not a Pull Request", config.get_github_event_name());
     }
 
     println!("Success!");

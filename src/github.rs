@@ -26,7 +26,7 @@ pub struct GitHubClient {
     user_cache: HashMap<String, GitHubUserCacheRecord>,
 }
 
-const USER_AGENT: &str = "testuser/committer-coverage-summary";
+const USER_AGENT: &str = "petrabarus/committer-coverage-summary";
 
 impl GitHubClient {
     pub fn new(
@@ -240,7 +240,7 @@ impl GitHubClient {
         let table = self.create_summary_content_table(summary, min_threshold);
         content.push_str(table.as_str());
 
-        let footer = "\n⭐ [github-action-committer-coverage-stats](https://github.com/testuser/github-action-committer-coverage-stats)";
+        let footer = "\n⭐ [github-action-committer-coverage-stats](https://github.com/petrabarus/github-action-committer-coverage-stats)";
         content.push_str(footer);
 
         content
@@ -269,8 +269,8 @@ impl GitHubClient {
     ) -> String {
         let mut table = String::new();
         let table_header =
-            "| **user** | **lines** | **covered** | **% covered** |
-|------|-------:|---------:|-----------|
+            "|  | **User** | **Lines** | **Covered** | **% Covered** |
+|--|------|-------:|---------:|-----------|
 ";
 
         table.push_str(table_header);
@@ -317,25 +317,41 @@ impl GitHubClient {
 
         if !EmailAddress::is_valid(email) {
             eprintln!("Invalid email: {}", email);
-            return self.must_get_name(name);
+            return self.create_unknown_user_display(name);
         }
 
         match self.get_user_by_email(email) {
             Ok(user) => match user {
-                Some(user) => format!(
-                    "<a href=\"{}\"><img src=\"{}\" width=\"20\"/></a> {}",
-                    user.url, user.avatar_url, user.username
+                Some(user) => self.create_user_display(
+                    user.username.as_str(),
+                    user.url.as_str(),
+                    user.avatar_url.as_str(),
                 ),
                 None => {
                     eprintln!("Received None user when creating summary table");
-                    self.must_get_name(name)
+                    self.create_unknown_user_display(name)
                 }
             },
             Err(err) => {
                 eprintln!("Failed to get user by email, got error when creating summary table: {}", err);
-                self.must_get_name(name)
+                self.create_unknown_user_display(name)
             }
         }
+    }
+
+    fn create_unknown_user_display(&self, name: &Option<String>) -> String {
+        self.create_user_display(
+            self.must_get_name(name).as_str(),
+            "https://github.com", 
+            "https://avatars.githubusercontent.com/u/1234567890?v=4"
+        )
+    }
+
+    fn create_user_display(&self, name: &str, url: &str, avatar_url: &str) -> String {
+        format!(
+            "<a href=\"{}\"><img src=\"{}\" width=\"20\"/></a> | {}",
+            url, avatar_url, name
+        )
     }
 
     fn must_get_name(&self, name: &Option<String>) -> String {
@@ -442,7 +458,7 @@ query {{
         let mut data = json::JsonValue::new_object();
         data["query"] = graphql_query.into();
         let data = data.dump();
-        println!("data: {}", data);
+        //eprintln!("data: {}", data);
 
         let graphql_url = format!("{}/graphql", self.api_url);
 

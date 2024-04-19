@@ -27,7 +27,7 @@ inputs:
     description: 
       Whether to use GitHub API to get the blame information of the files.
     required: false
-    default: "true"
+    default: "false"
   workspace:
     description: 'The workspace directory. Default is the root of the repository.'
     required: false
